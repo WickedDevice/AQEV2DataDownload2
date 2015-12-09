@@ -1,0 +1,46 @@
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.lcol{
+  vertical-align: top;
+  padding: 5px;
+  text-align:right;
+}
+
+.ccol{
+  vertical-align: top;
+  padding: 5px;
+  text-align: left;
+}
+
+.rcol{
+  vertical-align: top;
+  padding: 5px;
+  text-align: left;
+}
+
+td.ccol input[type="button"]{
+  margin-left: 1px;
+}
+
+td.ccol input{
+  width: 300px;
+}
+
+td.ccol select{
+  width: 300px;
+}
+
+td.ccol textarea{
+  width: 300px;
+}
+
+td.ccol select{
+  margin-left: 1px;
+}

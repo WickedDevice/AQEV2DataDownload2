@@ -1,0 +1,46 @@
+extends layout
+
+block content
+  h1 Download Data
+  table
+    tr
+      td.lcol
+        label Serial Number(s)
+      td.ccol
+        textarea#serial_numbers
+      td.rcol One serial number per line, e.g. egg0080...
+    tr
+      td.lcol
+        label Start Date
+      td.ccol
+        input#start_date(type="datetime-local", step="1")
+      td.rcol Enter (or choose date and enter time) the local start time of the data to download
+    tr
+      td.lcol
+        label End Date
+      td.ccol
+        input#end_date(type="datetime-local", step="1")
+      td.rcol Enter (or choose date and enter time) the local end time of the data to download (optional)
+    tr
+      td.lcol
+        label Duration
+      td.ccol
+        input#duration(type="number")
+      td.rcol Enter the duration from the start timeof the data to download (optional) (doesnt work yet)
+    tr
+      td.lcol
+        label Duration Units
+      td.ccol
+        select#duration_units
+          option(value="0") Minutes
+          option(value="1") Hours
+          option(value="2") Days
+      td.rcol Enter the units of the duration (required if duration is requested) (doesnt work yet)
+    tr
+      td.lcol
+      td.ccol(colspan="2")
+        input#download_submit(type="button", value="Download Data")
+    tr
+      td.lcol
+      td#download-file-links.ccol(colspan="2")
+  script(src="javascripts/download.js")
