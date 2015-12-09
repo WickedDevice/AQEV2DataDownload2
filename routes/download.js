@@ -7,6 +7,7 @@ var Promise = require("bluebird");
 var fs = Promise.promisifyAll(require("fs"));
 var AdmZip = require('adm-zip');
 var rimrafAsync = Promise.promisify(require("rimraf"));
+var moment = require('moment');
 
 router.get('/', function(req, res, next) {
   res.render('download', { title: 'Express' });
@@ -28,6 +29,12 @@ router.post('/', function(req, res, next) {
   if(params["serial-numbers"].length == 0){
     res.send({error: "at least one serial-number must be provided"});
     return;
+  }
+
+  var utcOffset = 0;
+  if(params["start-date"] && (params["start-date"] != "")){
+    var startDate = moment(params["start-date"]);
+    utcOffset = moment.parseZone(startDate).utcOffset();
   }
 
   var numRowsWrittenToFile = 0;
@@ -149,6 +156,8 @@ router.post('/', function(req, res, next) {
       return file.rows;
     }).each(function(row){
       numRowsWrittenToFile++;
+      // convert timestamp back to user's timezone
+      row[0] = moment(row[0]).utcOffset(utcOffset).format();
       return fs.appendFileAsync(filename, row.join(",")+'\r\n');
     });
   }).then(function(){
