@@ -54,8 +54,10 @@ $(function() {
         var duration = $('#duration').val();
         // TODO: figure out how duration works
 
+        $('body').addClass("loading");
         $.postJSON("", postObj, function (resp) {
             if (resp.uri) {
+                $('body').removeClass("loading");
                 $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
             }
         });

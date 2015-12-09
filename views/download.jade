@@ -38,9 +38,11 @@ block content
       td.rcol Enter the units of the duration (required if duration is requested) (doesnt work yet)
     tr
       td.lcol
-      td.ccol(colspan="2")
+      td.ccol
         input#download_submit(type="button", value="Download Data")
+      td.rcol Your file will be generated and then you will be presented with a link to download a zip (please be patient)
     tr
       td.lcol
       td#download-file-links.ccol(colspan="2")
+  div.modal
   script(src="javascripts/download.js")
