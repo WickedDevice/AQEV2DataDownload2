@@ -30,12 +30,14 @@ module.exports = function() {
             }).catch(function(err){
                 return null;
             }).then(function(allMessages){
-                allMessages.forEach(function(msg){
-                    if(!task.messages[msg.topic]){
-                        task.messages[msg.topic] = [];
-                    }
-                    task.messages[msg.topic].push(msg);
-                })
+                if(allMessages) {
+                    allMessages.forEach(function (msg) {
+                        if (!task.messages[msg.topic]) {
+                            task.messages[msg.topic] = [];
+                        }
+                        task.messages[msg.topic].push(msg);
+                    })
+                }
                 return task;
             });
         }).then(function(tasks){ // so tasks should look like an array of {serialNumber: 'xyz', messages: {topic1: [], topic2: [], ...}} objects
