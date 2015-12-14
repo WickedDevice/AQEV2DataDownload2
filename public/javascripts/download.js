@@ -47,19 +47,64 @@ $(function() {
             alert("End date is not complete / valid.");
         }
         else if (endDateStr != "") {
-            postObj["end-date"] = startDate.format();
+            postObj["end-date"] = endDate.format();
+        }
+
+        if(startDateStr != "" && startDate.isValid() && endDateStr != "" && endDate.isValid()){
+            if(!endDate.isAfter(startDate)){
+                alert("End date must be *after* start date.");
+                return;
+            }
         }
 
         // Duration
         var duration = $('#duration').val();
         // TODO: figure out how duration works
 
+        var uri = null;
+        var guid = null;
+        var statusIntervalId = null;
         $('body').addClass("loading");
         $.postJSON("", postObj, function (resp) {
-            if (resp.uri) {
-                $('body').removeClass("loading");
-                $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
-            }
+            uri = resp.uri;
+            guid = resp.guid;
+            $("#download-file-links").html("");
+            var status_list = $("#status").html("");
+            statusIntervalId = setInterval(function(){
+                $.getJSON('/download/status?guid='+guid, function(data, textStatus, jqXHR){
+                    if(data){
+                        var status_list = $("#status").html("<ul></ul>");
+                        var keys = Object.keys(data);
+                        var allDone = true;
+
+                        for(var ii = 0; ii < keys.length; ii++){
+                            if(!data[keys[ii]].complete){
+                                allDone = false;
+                            }
+
+                            var m = moment(data[keys[ii]].timestamp);
+                            // convert m to local time
+                            m.utcOffset(moment().utcOffset());
+                            var numResults = data[keys[ii]].numResults || 0;
+
+                            status_list.append("<li>"
+                                +keys[ii] + ': '
+                                + (data[keys[ii]].complete ? 'done' : (numResults > 0 ? 'in progress' : 'pending'))
+                                + ' / ' + numResults
+                                + ' / ' + (data[keys[ii]].timestamp ? m.format("MM/DD/YYYY, hh:mm:ss A") : '---')
+                                + '</li>');
+
+                        }
+                        if(allDone){
+                            clearInterval(statusIntervalId);
+                            $('body').removeClass("loading");
+                            $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
+                        }
+
+
+                    }
+                });
+            }, 5000);
         });
 
     });

@@ -1,6 +1,7 @@
 var config = require('../eggdataconfig')();
 var opensensors = require('./opensensors')(config)
 var Promise = require("bluebird");
+var extend = require('xtend');
 
 module.exports = function() {
     // params has required fields: serial-numbers
@@ -16,6 +17,7 @@ module.exports = function() {
         if(endDate){
             apiParams["end-date"] = endDate;
         }
+        apiParams.status = params.status;
 
         return Promise.try(function(){
             return serialNumbers;
@@ -26,7 +28,11 @@ module.exports = function() {
         }).map(function(task){ // task is object {serialNumber: 'xyz'}
             return Promise.try(function(){
                 task.messages = {}; // this will be a set of arrays
-                return opensensors.messages.byDevice(task.serialNumber, apiParams);
+                var lApiParams = extend(apiParams);
+                if(lApiParams && lApiParams.status){
+                    lApiParams.status.serialNumber = task.serialNumber;
+                }
+                return opensensors.messages.byDevice(task.serialNumber, lApiParams);
             }).catch(function(err){
                 return null;
             }).then(function(allMessages){
@@ -43,6 +49,5 @@ module.exports = function() {
         }).then(function(tasks){ // so tasks should look like an array of {serialNumber: 'xyz', messages: {topic1: [], topic2: [], ...}} objects
             return tasks;
         });
-
     };
 }

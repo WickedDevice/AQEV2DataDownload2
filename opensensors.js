@@ -1,5 +1,7 @@
 var Promise = require("bluebird");
 var bhttp = Promise.promisifyAll(require("bhttp"));
+var fs = Promise.promisifyAll(require("fs"));
+var extend = require('xtend');
 
 // config encapsulates opensensors-api-key
 // valid keys for config are: api-key (required)
@@ -16,12 +18,58 @@ module.exports = function(config) {
     // helper (actually workhorse) method that does a GET to a URL
     // it appends the augmented payloads in the response to the second argument that gets passed to it
     // if the response body JSON contains a next element it recursively calls itself
-    var recursiveGET = function(url, results){
+    var recursiveGET = function(url, results, status){
         console.log("Current Num Results: " + results.length + " -> URL: " + url);
         return Promise.try(function(){
             return bhttp.get(url, API_POST_OPTIONS);
         }).catch(function(err){
             console.error(err);
+        }).then(function(response){
+            // if there's a non-null status object provided
+            // lets reach into the status.filename
+            // and modify the entry for status.serialnumber
+            if(status && status.filename) {
+                return Promise.try(function () {
+                   return fs.readFileAsync(status.filename, 'utf8');
+                }).then(function(content) {
+                    return Promise.try(function () {
+                        if(content == ""){
+                            content = "{}";
+                        }
+                        var json = JSON.parse(content);
+                        if (!json[status.serialNumber]) {
+                            json[status.serialNumber] = {};
+                        }
+                        json[status.serialNumber].numResults = results.length + response.body.messages.length;
+                        if(results.length > 0) {
+                            json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
+                        }
+
+                        if(!response.body.next){
+                            json[status.serialNumber].complete = true;
+                        }
+                        else{
+                            json[status.serialNumber].complete = false;
+                        }
+
+                        return json;
+                    }).catch(function () {
+                        return null;
+                    }).then(function (json) {
+                        if(json) {
+                            return fs.writeFileAsync(status.filename, JSON.stringify(json));
+                        }
+                        else{
+                            return null;
+                        }
+                    });
+                }).then(function(){
+                    return response;
+                });
+            }
+            else {
+                return response; // pass it through
+            }
         }).then(function(response){
             var augmentedPayloads = [];
             if(response.body.messages){
@@ -38,7 +86,7 @@ module.exports = function(config) {
             var newResults = results.concat(augmentedPayloads);
 
             if(response.body.next){
-                return recursiveGET(API_BASE_URL + response.body.next, newResults);
+                return recursiveGET(API_BASE_URL + response.body.next, newResults, status);
             }
             else{
                 return newResults;
@@ -54,7 +102,9 @@ module.exports = function(config) {
             ret += '?';
 
             var encodeParams = Object.keys(params).map(function(key){
-                return key + '=' + params[key];
+                if(key != "status") { // special case, not an OpenSensors parameter
+                    return key + '=' + params[key];
+                }
             });
 
             ret += encodeParams.join('&');
@@ -74,7 +124,9 @@ module.exports = function(config) {
 
         url += "/" + val+ urlParams(params);
 
-        return recursiveGET(url, []);
+        var status = params ? extend(params.status) : null;
+
+        return recursiveGET(url, [], status);
     }
 
     // returns an array of message payloads from the API, augmented with timestamp

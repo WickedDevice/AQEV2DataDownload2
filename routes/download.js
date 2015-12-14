@@ -13,6 +13,34 @@ router.get('/', function(req, res, next) {
   res.render('download', { title: 'Express' });
 });
 
+router.get('/status', function(req, res, next){
+  var dir = __dirname.split('/');
+  dir = dir.slice(0, dir.length-1);
+  var downloadsFolder = dir.join('/') + "/public/downloads";
+
+  var guid = req.query.guid;
+  return Promise.try(function () {
+    return fs.readFileAsync(downloadsFolder + '/' + guid + '.json', 'utf8');
+  }).catch(function(err){
+    return null;
+  }).then(function(content) {
+    if(!content){
+      res.error("unkown job");
+      return;
+    }
+
+    var jsonData;
+    try{
+      jsonData = JSON.parse(content);
+    }
+    catch(e){
+      jsonData = null;
+    }
+
+    return res.send(jsonData);
+  });
+});
+
 // the client side javascript posts the download configuration data as a json object
 // and gets back a GUID that is a handle to check
 // the status of the download as well as to retrieve
@@ -57,6 +85,26 @@ router.post('/', function(req, res, next) {
   Promise.try(function(){
     return fs.mkdirAsync(dir);
   }).then(function(){
+    return res.send({
+      guid: guid,
+      uri: 'downloads/' + guid + '.zip'
+    });
+  }).then(function(){
+    // seed the status json file with an object like:
+    // {
+    //   serialnumber1: {complete: false},
+    //   serialnumber2: {complete: false}
+    //   ... etc
+    // }
+    var initJson = {};
+    for(var ii = 0; ii < params["serial-numbers"].length; ii++){
+      initJson[params["serial-numbers"][ii]] = {complete: false};
+    }
+    return fs.writeFileAsync(downloadsFolder + '/' + guid +'.json', JSON.stringify(initJson));
+  }).then(function(){
+    params.status = {
+      filename: downloadsFolder + '/' + guid + '.json',
+    }
     return aqe(params);
   }).then(function(results){
     // so at this point results is an array,
@@ -77,6 +125,10 @@ router.post('/', function(req, res, next) {
       }
     });
     var first = true;
+
+    if(minlength == 1e10){
+      return null;
+    }
 
     for(var ii = 0; ii < minlength; ii++){
       var row = [];
@@ -147,6 +199,10 @@ router.post('/', function(req, res, next) {
       header: headerRow
     };
   }).each(function(file){
+    if(!file){
+      return null;
+    }
+
     numFilesWritten++;
     var filename = dir +'/' + file.serialNumber + '.csv';
 
@@ -170,14 +226,7 @@ router.post('/', function(req, res, next) {
   }).then(function(){
     // remove the temp folder
     return rimrafAsync(dir);
-  }).then(function(){
-    return res.send({
-      "complete": true,
-      filesWritten: numFilesWritten,
-      rowsWritten: numRowsWrittenToFile,
-      uri: 'downloads/' + guid + '.zip'
-    });
-  })
+  });
 });
 
 router.get('/status', function(req, res, next){
