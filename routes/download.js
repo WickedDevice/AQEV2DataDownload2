@@ -10,7 +10,7 @@ var rimrafAsync = Promise.promisify(require("rimraf"));
 var moment = require('moment');
 
 router.get('/', function(req, res, next) {
-  res.render('download', { title: 'Express' });
+  res.render('download', { title: 'Air Quality Egg v2 - Download Data' });
 });
 
 router.get('/status', function(req, res, next){
