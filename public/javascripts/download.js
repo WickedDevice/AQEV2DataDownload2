@@ -58,8 +58,35 @@ $(function() {
         }
 
         // Duration
-        var duration = $('#duration').val();
-        // TODO: figure out how duration works
+        var duration = "";
+        if($("#durationYears").val() != ""){
+            duration += $("#durationYears").val() + "Y";
+        }
+        if($("#durationMonths").val() != ""){
+            duration += $("#durationMonths").val() + "M";
+        }
+        if($("#durationDays").val() != ""){
+            duration += $("#durationDays").val() + "D";
+        }
+
+        if(($("#durationHours").val() != "") || ($("#durationMinutes").val() != "")){
+            duration += "T";
+            if($("#durationHours").val() != ""){
+                duration += $("#durationHours").val() + "H";
+            }
+            if($("#durationMinutes").val() != ""){
+                duration += $("#durationMinutes").val() + "M";
+            }
+        }
+        if(duration != ""){
+            duration = "P" + duration;
+            postObj["duration"] = duration;
+        }
+
+        if(postObj["duration"] && postObj["end-date"]){
+            alert("Duration cannot be used with end date");
+            return;
+        }
 
         var uri = null;
         var guid = null;

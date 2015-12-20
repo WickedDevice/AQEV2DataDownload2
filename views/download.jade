@@ -25,17 +25,25 @@ block content
       td.lcol
         label Duration
       td.ccol
-        input#duration(type="number")
-      td.rcol Enter the duration from the start timeof the data to download (optional) (<b>doesnt work yet</b>)
-    tr
-      td.lcol
-        label Duration Units
-      td.ccol
-        select#duration_units
-          option(value="0") Minutes
-          option(value="1") Hours
-          option(value="2") Days
-      td.rcol Enter the units of the duration (required if duration is requested) (<b>doesnt work yet</b>)
+        table
+          tr
+            td(style="padding-left:0px;") Yrs
+            td Mos
+            td Days
+            td Hrs
+            td Mins
+          tr
+            td(style="padding-left:0px;")
+              input#durationYears(type="number", min="0", max="999")
+            td
+              input#durationMonths(type="number", min="0", max="999")
+            td
+              input#durationDays(type="number", min="0", max="999")
+            td
+              input#durationHours(type="number", min="0", max="999")
+            td
+              input#durationMinutes(type="number", min="0", max="999")
+      td.rcol(style="vertical-align: middle") Enter the <a href="http://www.wikiwand.com/en/ISO_8601#/Durations">ISO-8601 formatted</a> duration to download (any/all optional)
     tr
       td.lcol
       td.ccol
@@ -44,6 +52,9 @@ block content
     tr
       td.lcol
       td#download-file-links.ccol(colspan="2")
+    tr
+      td.lcol
+      td.ccol(colspan="2") Note: The behavior of duration is as follows. If you pick a start date, the duration runs from that point forward. If you only give a duration, leaving start and end date empty, you will receive data for that duration from the most recent message going back in time.
   div.modal
   div#status
   script(src="javascripts/download.js")
