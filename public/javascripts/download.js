@@ -20,7 +20,7 @@ $(function() {
             return serialNumber.trim();
         });
 
-        if (validSerialNumbers.length == 0) {
+        if (validSerialNumbers.length == 0 || $("#serial_numbers").val().trim() == "") {
             alert("Please enter at least one Serial Nubmer");
             return;
         }
@@ -30,6 +30,11 @@ $(function() {
         };
 
         // Start Date
+        if($('#start_date')[0].validity && !$('#start_date')[0].validity.valid){
+            alert("Start date is not complete / valid.");
+            return;
+        }
+
         var startDateStr = $('#start_date').val().trim();
         var startDate = moment(startDateStr);
         if (startDateStr != "" && !startDate.isValid()) {
@@ -41,6 +46,11 @@ $(function() {
         }
 
         // End Date
+        if($('#end_date')[0].validity && !$('#end_date')[0].validity.valid){
+            alert("End date is not complete / valid.");
+            return;
+        }
+
         var endDateStr = $('#end_date').val().trim();
         var endDate = moment(endDateStr);
         if (endDateStr != "" && !endDate.isValid()) {
