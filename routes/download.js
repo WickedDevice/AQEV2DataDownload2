@@ -5,9 +5,9 @@ var aqe = require('../airqualityegg')();
 var extend = require('xtend');
 var Promise = require("bluebird");
 var fs = Promise.promisifyAll(require("fs"));
-var AdmZip = require('adm-zip');
 var rimrafAsync = Promise.promisify(require("rimraf"));
 var moment = require('moment');
+require('node-zip');
 
 router.get('/', function(req, res, next) {
   res.render('download', { title: 'Air Quality Egg v2 - Download Data' });
@@ -53,6 +53,10 @@ router.post('/', function(req, res, next) {
   // what is supported:
   //    REQUIRED: at least one serial number
   var params = extend(req.body);
+
+  params["serial-numbers"] = params["serial-numbers"].filter(function(item){
+    return item.trim() != "";
+  });
 
   if(params["serial-numbers"].length == 0){
     res.send({error: "at least one serial-number must be provided"});
@@ -232,13 +236,34 @@ router.post('/', function(req, res, next) {
       row[0] = moment(row[0]).utcOffset(utcOffset).format();
       return fs.appendFileAsync(filename, row.join(",")+'\r\n');
     });
-  }).then(function(){
+  }).then(function() {
     // sweet we finished writing all the data to files
     // i guess we should let the client know or something
-    var zip = new AdmZip();
-    zip.addLocalFolder(dir, '/');
-    zip.writeZip(downloadsFolder + '/' + zipFilename + '.zip');
-    return {};
+    var zip = new JSZip();
+
+    return Promise.try(function(){
+      return params["serial-numbers"];
+    }).map(function(serialNumber) {
+      return {
+        serialNumber: serialNumber
+      };
+    }).map(function(task){
+      return Promise.try(function() {
+        return fs.readFileAsync(downloadsFolder + '/' + guid + '/' + task.serialNumber + '.csv');
+      }).catch(function(err){
+        return null;
+      }).then(function(data){
+        task.data = data;
+        return task;
+      });
+    }).filter(function(task){
+      return (task.data != null);
+    }).each(function(task){
+      zip.file(task.serialNumber + ".csv", task.data);
+    }).then(function(){
+      var zipdata = zip.generate({base64: false, compression: 'DEFLATE'});
+      return fs.writeFileAsync(downloadsFolder + '/' + zipFilename + '.zip', zipdata, 'binary');
+    });
   }).then(function(){
     // remove the temp folder
     return rimrafAsync(dir);
