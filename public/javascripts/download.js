@@ -88,6 +88,16 @@ $(function() {
             return;
         }
 
+        // WORKAROUND: OpenSensors API supports a duration param
+        //             but there is a bug that makes it not work
+        //             if the query requires iteration
+        //             ... so make duration become an end-date instead
+        if(duration != "" && startDateStr != "" && startDate.isValid()){
+            var dur = moment.duration(duration);
+            postObj["end-date"] = startDate.add(dur).format();
+            delete postObj.duration;
+        }
+
         var uri = null;
         var guid = null;
         var statusIntervalId = null;
