@@ -40,7 +40,16 @@ module.exports = function(config) {
                         if (!json[status.serialNumber]) {
                             json[status.serialNumber] = {};
                         }
-                        json[status.serialNumber].numResults = results.length + response.body.messages.length;
+
+                        if(response.body.messages) {
+                            json[status.serialNumber].numResults = results.length + response.body.messages.length;
+                        }
+                        else{
+                            json[status.serialNumber].complete = true;
+                            json[status.serialNumber].error = true;
+                            json[status.serialNumber].errorMessage = "No messages found.";
+                        }
+
                         if(results.length > 0) {
                             json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
                         }

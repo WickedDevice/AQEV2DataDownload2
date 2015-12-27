@@ -129,6 +129,7 @@ $(function() {
                                 + (data[keys[ii]].complete ? 'done' : (numResults > 0 ? 'in progress' : 'pending'))
                                 + ' / ' + numResults
                                 + ' / ' + (data[keys[ii]].timestamp ? m.format("MM/DD/YYYY, hh:mm:ss A") : '---')
+                                + ((data[keys[ii]].error) ? " [Error: " + data[keys[ii]].errorMessage + "]" : "" )
                                 + '</li>');
 
                         }
