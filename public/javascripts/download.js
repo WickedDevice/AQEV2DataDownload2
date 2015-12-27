@@ -108,6 +108,15 @@ $(function() {
             delete postObj.duration;
         }
 
+        // zip filename, handle the user providing the zip extension, or not
+        if($("#zipfilename").val().trim() != ""){
+            var fname = $("#zipfilename").val().trim();
+            if(/\.zip$/.test(fname)){
+                fname = fname.substr(0, fname.length - 4);
+            }
+            postObj.zipfilename = fname;;
+        }
+
         var uri = null;
         var guid = null;
         var statusIntervalId = null;
@@ -123,6 +132,7 @@ $(function() {
                         var status_list = $("#status").html("<ul></ul>");
                         var keys = Object.keys(data);
                         var allDone = true;
+                        var atLeastOneWithNoError = false;
 
                         for(var ii = 0; ii < keys.length; ii++){
                             if(!data[keys[ii]].complete){
@@ -133,6 +143,10 @@ $(function() {
                             // convert m to local time
                             m.utcOffset(moment().utcOffset());
                             var numResults = data[keys[ii]].numResults || 0;
+
+                            if(!data[keys[ii]].error){
+                                atLeastOneWithNoError = true;
+                            }
 
                             status_list.append("<li>"
                                 +keys[ii] + ': '
@@ -146,7 +160,9 @@ $(function() {
                         if(allDone){
                             clearInterval(statusIntervalId);
                             $('body').removeClass("loading");
-                            $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
+                            if(atLeastOneWithNoError) {
+                                $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
+                            }
                         }
 
 

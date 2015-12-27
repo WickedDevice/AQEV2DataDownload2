@@ -65,6 +65,22 @@ router.post('/', function(req, res, next) {
     utcOffset = moment.parseZone(startDate).utcOffset();
   }
 
+  var zipFilename = "";
+  if(params.zipfilename){
+    var m = moment();
+    m.utcOffset(startDate.utcOffset());
+    zipFilename = params.zipfilename + "-" + m.format();
+    zipFilename = zipFilename.replace(/[^\x20-\x7E]+/g, ''); // no non-printable characters allowed
+    ['\\\\','/',':','\\*','\\?','"','<','>','\\|'].forEach(function(c){
+      var regex = new RegExp(c, "g");
+      zipFilename = zipFilename.replace(regex, "_"); // turn illegal characters into '_'
+    });
+
+  }
+  else{
+    zipFilename = guid;
+  }
+
   var numRowsWrittenToFile = 0;
   var numFilesWritten = 0;
   var dir = __dirname.split('/');
@@ -87,7 +103,7 @@ router.post('/', function(req, res, next) {
   }).then(function(){
     return res.send({
       guid: guid,
-      uri: 'downloads/' + guid + '.zip'
+      uri: 'downloads/' + zipFilename + '.zip'
     });
   }).then(function(){
     // seed the status json file with an object like:
@@ -221,7 +237,7 @@ router.post('/', function(req, res, next) {
     // i guess we should let the client know or something
     var zip = new AdmZip();
     zip.addLocalFolder(dir, '/');
-    zip.writeZip(downloadsFolder + '/' + guid + '.zip');
+    zip.writeZip(downloadsFolder + '/' + zipFilename + '.zip');
     return {};
   }).then(function(){
     // remove the temp folder

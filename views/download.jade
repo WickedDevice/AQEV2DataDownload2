@@ -46,6 +46,12 @@ block content
       td.rcol(style="vertical-align: middle") Enter the <a href="http://www.wikiwand.com/en/ISO_8601#/Durations">ISO-8601 formatted</a> duration to download (any/all optional)
     tr
       td.lcol
+        label Filename
+      td.ccol
+        input#zipfilename(type="text")
+      td.rcol Enter a name for the generated zip file, or we'll make one up for you randomly
+    tr
+      td.lcol
       td.ccol
         input#download_submit(type="button", value="Download Data")
       td.rcol Your file will be generated and then you will be presented with a link to download a zip (<b>please be patient</b>)

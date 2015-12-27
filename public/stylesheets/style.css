@@ -37,6 +37,10 @@ td.ccol select{
   width: 300px;
 }
 
+td.ccol input[type="text"]{
+  width: 300px;
+}
+
 td.ccol textarea{
   width: 300px;
 }
