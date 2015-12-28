@@ -85,3 +85,7 @@ body.loading {
 body.loading .modal {
   display: block;
 }
+
+div#status{
+  padding-bottom: 10px;
+}

@@ -14,13 +14,13 @@ block content
         label Start Date
       td.ccol
         input#start_date(type="datetime-local", step="1")
-      td.rcol Enter (or choose date and enter time) the local <a href="http://www.wikiwand.com/en/ISO_8601#/Combined_date_and_time_representations">ISO-8601 formatted</a> start time of the data to download
+      td.rcol Enter (or choose date and enter time) the local <a href="http://www.wikiwand.com/en/ISO_8601#/Combined_date_and_time_representations">ISO-8601 formatted</a> start time of the data to download. E.g. 2015-12-27T20:24:12-07:00. Or just use form controls in Chrome.
     tr
       td.lcol
         label End Date
       td.ccol
         input#end_date(type="datetime-local", step="1")
-      td.rcol Enter (or choose date and enter time) the local <a href="http://www.wikiwand.com/en/ISO_8601#/Combined_date_and_time_representations">ISO-8601 formatted</a> end time of the data to download (optional)
+      td.rcol Enter (or choose date and enter time) the local <a href="http://www.wikiwand.com/en/ISO_8601#/Combined_date_and_time_representations">ISO-8601 formatted</a> end time of the data to download. E.g. 2015-12-27T20:24:12-07:00. Or just use form controls in Chrome.
     tr
       td.lcol
         label Duration
@@ -60,7 +60,16 @@ block content
       td#download-file-links.ccol(colspan="2")
     tr
       td.lcol
-      td.ccol(colspan="2") Note: The behavior of duration is as follows. If you pick a start date, the duration runs from that point forward. If you only give a duration, leaving start and end date empty, you will receive data for that duration from the most recent message going back in time.
+      td.ccol(colspan="2")
+        div#status
+        div
+          ul
+            li Note: The behavior of duration is as follows.
+            ul
+              li If you pick only a start date and duration, the duration runs from that point forward.
+              li If you pick only an end date and duration, the duration runs from that point backward.
+              li If you only give a duration, with neither a start date nor an end date, the end date is implied to be now.
+              li If you provide only a start date, the end date is implied to be now.
+
   div.modal
-  div#status
   script(src="javascripts/download.js")

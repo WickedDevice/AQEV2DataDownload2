@@ -93,20 +93,72 @@ $(function() {
             postObj["duration"] = duration;
         }
 
-        if(postObj["duration"] && postObj["end-date"]){
-            alert("Duration cannot be used with end date");
+        if(postObj["duration"] && postObj["end-date"] && postObj["start-date"]){
+            alert("Duration cannot be used with *both* start date *and* end date");
             return;
+        }
+
+        function validStartDate(){
+            return startDateStr != "" && startDate.isValid();
+        }
+
+        function validEndDate(){
+            return endDateStr != "" && endDate.isValid();
+        }
+
+        function validDuration(){
+            return duration != "";
         }
 
         // WORKAROUND: OpenSensors API supports a duration param
         //             but there is a bug that makes it not work
         //             if the query requires iteration
         //             ... so make duration become an end-date instead
-        if(duration != "" && startDateStr != "" && startDate.isValid()){
+        // Case #1: start date and duration provided, but not end date
+        if(validDuration() && validStartDate() && !validEndDate()){
             var dur = moment.duration(duration);
             postObj["end-date"] = startDate.add(dur).format();
             delete postObj.duration;
         }
+        // Case #2: end date and duration provided, but not start date
+        else if(validDuration() && !validStartDate() && validEndDate()){
+            var dur = moment.duration(duration);
+            postObj["start-date"] = endDate.subtract(dur).format();
+            delete postObj.duration;
+        }
+        // Case #3: duration provided, with neither start date nor end date
+        else if(validDuration() && !validStartDate() && !validEndDate()){
+            var dur = moment.duration(duration);
+            endDate = moment();
+            postObj["end-date"] = endDate.format();
+            postObj["start-date"] = endDate.subtract(dur).format();
+            delete postObj.duration;
+        }
+        // Case #4: neither duration, nor start date, nor end date were provided
+        else if(!validDuration() && !validStartDate() && !validEndDate()){
+            alert("Not providing any of duration, start date, or end date is invalid.");
+            return;
+        }
+        // Case #5: all of duration, start date, and end date were provided
+        else if(validDuration() && validStartDate() && validEndDate()){
+            alert("Providing duration, start date, *and* end date is invalid.");
+            return;
+        }
+        // Case #6: end date was provided, but neither duration, nor start date
+        else if(!validDuration() && !validStartDate() && validEndDate()){
+            alert("Providing a end date, but neither duration nor start date is invalid.");
+            return;
+        }
+        // Case #7:
+        else if(!validDuration() && validStartDate() && validEndDate()){
+            // this is fine, nothing to do here
+            // duration is not in play / implied
+        }
+        // Case #8: start date provided with neither end date, but nor duration
+        else if(!validDuration() && validStartDate() && !validEndDate()){
+            postObj["end-date"] = moment().format();
+        }
+
 
         // zip filename, handle the user providing the zip extension, or not
         if($("#zipfilename").val().trim() != ""){
@@ -129,7 +181,8 @@ $(function() {
             statusIntervalId = setInterval(function(){
                 $.getJSON('/download/status?guid='+guid, function(data, textStatus, jqXHR){
                     if(data){
-                        var status_list = $("#status").html("<ul></ul>");
+                        $("#status").html("<ul></ul>");
+                        var status_list = $("#status ul")
                         var keys = Object.keys(data);
                         var allDone = true;
                         var atLeastOneWithNoError = false;
