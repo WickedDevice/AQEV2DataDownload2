@@ -92,14 +92,16 @@ module.exports = function(config) {
                 });
             }
 
-            var newResults = results.concat(augmentedPayloads);
-
-            if(response.body.next){
-                return recursiveGET(API_BASE_URL + response.body.next, newResults, status);
-            }
-            else{
-                return newResults;
-            }
+            return Promise.try(function(){
+                return results.concat(augmentedPayloads);
+            }).then(function(newResults){
+                if(response.body.next){
+                    return recursiveGET(API_BASE_URL + response.body.next, newResults, status);
+                }
+                else{
+                    return newResults;
+                }
+            });
         });
     };
 

@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+var expressPromiseRouter = require("express-promise-router");
+var router = expressPromiseRouter();
 var Guid = require('guid');
 var aqe = require('../airqualityegg')();
 var extend = require('xtend');
@@ -9,11 +9,11 @@ var rimrafAsync = Promise.promisify(require("rimraf"));
 var moment = require('moment');
 require('node-zip');
 
-router.get('/', function(req, res, next) {
+router.get('/', function(req, res) {
   res.render('download', { title: 'Air Quality Egg v2 - Download Data' });
 });
 
-router.get('/status', function(req, res, next){
+router.get('/status', function(req, res){
   var dir = __dirname.split('/');
   dir = dir.slice(0, dir.length-1);
   var downloadsFolder = dir.join('/') + "/public/downloads";
@@ -45,7 +45,7 @@ router.get('/status', function(req, res, next){
 // and gets back a GUID that is a handle to check
 // the status of the download as well as to retrieve
 // the downloaded file when it's ready
-router.post('/', function(req, res, next) {
+router.post('/', function(req, res) {
   // create a guid
   var guid = Guid.raw();
 
@@ -268,12 +268,6 @@ router.post('/', function(req, res, next) {
     // remove the temp folder
     return rimrafAsync(dir);
   });
-});
-
-router.get('/status', function(req, res, next){
-  var jobname = req.query.guid; // what's the status of this job
-
-
 });
 
 module.exports = router;
