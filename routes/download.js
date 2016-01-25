@@ -158,7 +158,7 @@ router.post('/', function(req, res) {
       row.push(result.messages["/orgs/wd/aqe/temperature"][ii]['converted-value']);
       row.push(result.messages["/orgs/wd/aqe/humidity"][ii]['converted-value']);
       if(first) {
-        headerRow.push("timestamp[GMT]");
+        headerRow.push("timestamp");
         headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][ii]['converted-units'] + ']');
         headerRow.push("humidity[%]");
       }

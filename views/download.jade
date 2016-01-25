@@ -70,6 +70,11 @@ block content
               li If you pick only an end date and duration, the duration runs from that point backward.
               li If you only give a duration, with neither a start date nor an end date, the end date is implied to be now.
               li If you provide only a start date, the end date is implied to be now.
+            li Note: The timestamps in downloaded files have thie following format:
+            ul
+              li MM/DD/YYYY HH:mm:ss
+              li Time is adjusted to the local timezone of your computer
+              li Hours are in 24-hour format, all fields are zero-padded
 
   div.modal
   script(src="javascripts/download.js")
