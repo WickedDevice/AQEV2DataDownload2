@@ -35,7 +35,8 @@ module.exports = function(config) {
         });
     };
 
-    var recursiveGET = function(url, results, status){
+
+    var recursiveGET = function(url, results, status, followNext){
         console.log("Current Num Results: " + results.length + " -> URL: " + url);
         return Promise.try(function(){
             return getUntilNot400(url);
@@ -112,8 +113,8 @@ module.exports = function(config) {
             return Promise.try(function(){
                 return results.concat(augmentedPayloads);
             }).then(function(newResults){
-                if(response.body.next){
-                    return recursiveGET(API_BASE_URL + response.body.next, newResults, status);
+                if(followNext && response.body.next){
+                    return recursiveGET(API_BASE_URL + response.body.next, newResults, status, followNext);
                 }
                 else{
                     return newResults;
@@ -154,7 +155,7 @@ module.exports = function(config) {
 
         var status = params ? extend(params.status) : null;
 
-        return recursiveGET(url, [], status);
+        return recursiveGET(url, [], status, true); // follow_next = true
     }
 
     // returns an array of message payloads from the API, augmented with timestamp

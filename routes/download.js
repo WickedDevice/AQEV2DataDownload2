@@ -233,7 +233,7 @@ router.post('/', function(req, res) {
     }).each(function(row){
       numRowsWrittenToFile++;
       // convert timestamp back to user's timezone
-      row[0] = moment(row[0]).utcOffset(utcOffset).format();
+      row[0] = moment(row[0]).utcOffset(utcOffset).format("MM/DD/YYYY HH:mm:ss");
       return fs.appendFileAsync(filename, row.join(",")+'\r\n');
     });
   }).then(function() {
