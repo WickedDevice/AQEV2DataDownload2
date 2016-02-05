@@ -24,6 +24,8 @@ module.exports = function(config) {
             return bhttp.get(theUrl, API_POST_OPTIONS);
         }).then(function(response){
             if(response.statusCode == 400){
+                console.log(theUrl);
+                console.log(response.body);
                 console.log("Got 400, waiting 30 seconds before trying again");
                 return Promise.delay(30000).then(function(){
                     return getUntilNot400(theUrl);
@@ -132,7 +134,7 @@ module.exports = function(config) {
 
             var encodeParams = Object.keys(params).map(function(key){
                 if(key != "status") { // special case, not an OpenSensors parameter
-                    return key + '=' + params[key];
+                    return key + '=' + encodeURIComponent(params[key]);
                 }
             });
 
