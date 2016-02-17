@@ -104,11 +104,18 @@ module.exports = function(config) {
             if(response.body.messages){
                 augmentedPayloads = response.body.messages.map(function(msg){
                     // as it turns out nan is not valid JSON
-                    var body = msg.payload.text.replace(/nan/g, 'null');
-                    var datum = JSON.parse(body);
-                    datum.timestamp = msg.date;
-                    datum.topic = msg.topic;
-                    return datum;
+                    try {
+                        var body = msg.payload.text.replace(/':nan/g, '":null');
+                        body = body.replace(/nan/g, 'null');
+
+                        var datum = JSON.parse(body);
+                        datum.timestamp = msg.date;
+                        datum.topic = msg.topic;
+                        return datum;
+                    }
+                    catch(exception){
+                        console.log(exception);
+                    }
                 });
             }
 
