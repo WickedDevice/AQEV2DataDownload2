@@ -115,7 +115,10 @@ module.exports = function(config) {
                     }
                     catch(exception){
                         console.log(exception);
+                        return null;
                     }
+                }).filter(function(msg){
+                    return msg !== null;
                 });
             }
 
