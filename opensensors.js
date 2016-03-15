@@ -108,6 +108,9 @@ module.exports = function(config) {
                         var body = msg.payload.text.replace(/':nan/g, '":null');
                         body = body.replace(/nan/g, 'null');
 
+                        // workaround for malformation of uknown origin resulting in ' where " should be
+                        body = body.replace(/'/g, '"');
+                        
                         var datum = JSON.parse(body);
                         datum.timestamp = msg.date;
                         datum.topic = msg.topic;
