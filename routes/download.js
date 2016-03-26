@@ -85,6 +85,9 @@ router.post('/', function(req, res) {
     zipFilename = guid;
   }
 
+  var use_instant_values = params.use_instant_values;
+  var use_uncompensated_values = params.use_uncompensated_values;
+
   var numRowsWrittenToFile = 0;
   var numFilesWritten = 0;
   var dir = __dirname.split('/');
@@ -285,7 +288,16 @@ router.post('/', function(req, res) {
       row.push(earliest_date.format()); // every row gets a timestamp
 
       var record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature", earliest_date, window_interval_seconds);
-      row.push(valueOrInvalid(record['converted-value']));
+      if(!use_instant_values && !use_uncompensated_values) {
+        row.push(valueOrInvalid(record['converted-value']));
+      }
+      else if(use_instant_values){
+        row.push(valueOrInvalid(record['raw-instant-value']));
+      }
+      else if(use_uncompensated_values){
+        row.push(valueOrInvalid(record['raw-value']));
+      }
+
       if(latitude === null && record["latitude"]){
         latitude = record["latitude"];
         longitude = record["longitude"];
@@ -293,7 +305,16 @@ router.post('/', function(req, res) {
       }
 
       record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity", earliest_date, window_interval_seconds);
-      row.push(valueOrInvalid(record['converted-value']));
+      if(!use_instant_values && !use_uncompensated_values) {
+        row.push(valueOrInvalid(record['converted-value']));
+      }
+      else if(use_instant_values){
+        row.push(valueOrInvalid(record['raw-instant-value']));
+      }
+      else if(use_uncompensated_values){
+        row.push(valueOrInvalid(record['raw-value']));
+      }
+
       if(latitude === null && record["latitude"]){
         latitude = record["latitude"];
         longitude = record["longitude"];
@@ -314,10 +335,24 @@ router.post('/', function(req, res) {
       if(result.messages["/orgs/wd/aqe/no2"] || result.messages["/orgs/wd/aqe/co"]){
         var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
         var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds)
-        row.push(valueOrInvalid(no2_record['compensated-value']));
-        row.push(valueOrInvalid(co_record['compensated-value']));
-        row.push(valueOrInvalid(no2_record['raw-value']));
-        row.push(valueOrInvalid(co_record['raw-value']));
+
+        if(!use_uncompensated_values) {
+          row.push(valueOrInvalid(no2_record['compensated-value']));
+          row.push(valueOrInvalid(co_record['compensated-value']));
+        }
+        else{
+          row.push(valueOrInvalid(no2_record['converted-value']));
+          row.push(valueOrInvalid(co_record['converted-value']));
+        }
+
+        if(!use_instant_values) {
+          row.push(valueOrInvalid(no2_record['raw-value']));
+          row.push(valueOrInvalid(co_record['raw-value']));
+        }
+        else{
+          row.push(valueOrInvalid(no2_record['raw-instant-value']));
+          row.push(valueOrInvalid(co_record['raw-instant-value']));
+        }
 
         if(latitude === null && no2_record["latitude"]){
           latitude = no2_record["latitude"];
@@ -343,10 +378,23 @@ router.post('/', function(req, res) {
         var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
         var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds)
 
-        row.push(valueOrInvalid(so2_record['compensated-value']));
-        row.push(valueOrInvalid(o3_record['compensated-value']));
-        row.push(valueOrInvalid(so2_record['raw-value']));
-        row.push(valueOrInvalid(o3_record['raw-value']));
+        if(!use_uncompensated_values) {
+          row.push(valueOrInvalid(so2_record['compensated-value']));
+          row.push(valueOrInvalid(o3_record['compensated-value']));
+        }
+        else{
+          row.push(valueOrInvalid(so2_record['converted-value']));
+          row.push(valueOrInvalid(o3_record['converted-value']));
+        }
+
+        if(!use_instant_values) {
+          row.push(valueOrInvalid(so2_record['raw-value']));
+          row.push(valueOrInvalid(o3_record['raw-value']));
+        }
+        else{
+          row.push(valueOrInvalid(so2_record['raw-instant-value']));
+          row.push(valueOrInvalid(o3_record['raw-instant-value']));
+        }
 
         if(latitude === null && so2_record["latitude"]){
           latitude = so2_record["latitude"];
@@ -370,8 +418,15 @@ router.post('/', function(req, res) {
 
       if(result.messages["/orgs/wd/aqe/particulate"]){
         var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/pm", earliest_date, window_interval_seconds);
-        row.push(valueOrInvalid(pm_record['compensated-value']));
-        row.push(valueOrInvalid(pm_record['raw-value']));
+
+        row.push(valueOrInvalid(pm_record['converted-value']));
+
+        if(!use_instant_values) {
+          row.push(valueOrInvalid(pm_record['raw-value']));
+        }
+        else{
+          row.push(valueOrInvalid(pm_record['raw-instant-value']));
+        }
 
         if(first) {
           headerRow.push("pm[ug/m^3]");

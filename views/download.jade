@@ -52,6 +52,18 @@ block content
       td.rcol Enter a name for the generated zip file, or we'll make one up for you randomly
     tr
       td.lcol
+        input#use_instant_values(type="checkbox")
+      td.ccol
+        label Instantaneous Values
+      td.rcol Checking the box gets instantaneous readings where possible (currently only for 'raw' values)
+    tr
+      td.lcol
+        input#use_uncompensated_values(type="checkbox")
+      td.ccol
+        label Uncompensated Values
+      td.rcol Checking the box gets raw readings where possible (e.g. 'converted' rather than 'compensated' values). The Instantaneous checkbox takes precedence over the Uncompensated checkbox.
+    tr
+      td.lcol
       td.ccol
         input#download_submit(type="button", value="Download Data")
       td.rcol Your file will be generated and then you will be presented with a link to download a zip (<b>please be patient</b>)
@@ -75,6 +87,9 @@ block content
               li MM/DD/YYYY HH:mm:ss
               li Time is adjusted to the local timezone of your computer
               li Hours are in 24-hour format, all fields are zero-padded
+            li Source code for this web application can be found&nbsp;
+              a(href="https://github.com/WickedDevice/AQEV2DataDownload") here
+            li Application last updated on Friday 3/25/2016
 
   div.modal
   script(src="javascripts/download.js")

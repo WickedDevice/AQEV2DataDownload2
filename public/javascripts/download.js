@@ -169,6 +169,14 @@ $(function() {
             postObj.zipfilename = fname;;
         }
 
+        if($("#use_instant_values").is(':checked')){
+            postObj.use_instant_values = true;
+        }
+
+        if($("#use_uncompensated_values").is(':checked')){
+            postObj.use_uncompensated_values = true;
+        }
+
         var uri = null;
         var guid = null;
         var statusIntervalId = null;
