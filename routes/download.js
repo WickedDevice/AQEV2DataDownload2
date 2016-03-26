@@ -210,7 +210,7 @@ router.post('/', function(req, res) {
       "/orgs/wd/aqe/co" : 0,
       "/orgs/wd/aqe/so2" : 0,
       "/orgs/wd/aqe/o3" : 0,
-      "/orgs/wd/aqe/pm" : 0
+      "/orgs/wd/aqe/particulate" : 0
     };
 
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
@@ -243,12 +243,13 @@ router.post('/', function(req, res) {
         return {};
       }
 
-      var end_of_target_window = moment(target_timestamp).add(within_seconds, "seconds");
+      var start_of_target_window = moment(target_timestamp).subtract(within_seconds/2, "seconds");
+      var end_of_target_window = moment(target_timestamp).add(within_seconds/2, "seconds");
       for(var ii = starting_indices_by_topic[topic]; ii < arr.length; ii++){
         if(arr[ii] && arr[ii].timestamp){
           // if this value is within the window and the target field exists in the associated record
           // then we should return that value
-          if(target_timestamp.isBefore(arr[ii].timestamp)){
+          if(start_of_target_window.isBefore(arr[ii].timestamp)){
             if(end_of_target_window.isAfter(arr[ii].timestamp)){
               starting_indices_by_topic[topic] = ii++;
               if(target_field && (arr[ii][target_field] !== null)) { // target field requested, and a non-null value exists
@@ -417,7 +418,7 @@ router.post('/', function(req, res) {
       }
 
       if(result.messages["/orgs/wd/aqe/particulate"]){
-        var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/pm", earliest_date, window_interval_seconds);
+        var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate", earliest_date, window_interval_seconds);
 
         row.push(valueOrInvalid(pm_record['converted-value']));
 
