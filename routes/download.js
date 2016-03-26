@@ -184,13 +184,14 @@ router.post('/', function(req, res) {
 
     });
 
-    console.log("Earliest Date: " + earliest_date.format() + ", Most Recent Date: " + most_recent_date.format());
-
     var first = true;
 
     if(!earliest_date || !most_recent_date){
+      console.log("Earliest Date: " + earliest_date + ", Most Recent Date: " + most_recent_date);
       return null;
     }
+
+    console.log("Earliest Date: " + earliest_date.format() + ", Most Recent Date: " + most_recent_date.format());
 
     if(!most_recent_date.isAfter(earliest_date)){
       console.log("Most Recent Date is not after earliest date");
