@@ -83,6 +83,7 @@ module.exports = function(config) {
 
                         return json;
                     }).catch(function () {
+                        console.log(err);
                         return null;
                     }).then(function (json) {
                         if(json) {
@@ -104,13 +105,14 @@ module.exports = function(config) {
             if(response.body.messages){
                 augmentedPayloads = response.body.messages.map(function(msg){
                     // as it turns out nan is not valid JSON
+                    var body;
                     try {
-                        var body = msg.payload.text.replace(/':nan/g, '":null');
+                        body = msg.payload.text.replace(/':nan/g, '":null');
                         body = body.replace(/nan/g, 'null');
 
                         // workaround for malformation of uknown origin resulting in ' where " should be
                         body = body.replace(/'/g, '"');
-                        
+
                         var datum = JSON.parse(body);
                         datum.timestamp = msg.date;
                         datum.topic = msg.topic;
@@ -118,10 +120,12 @@ module.exports = function(config) {
                     }
                     catch(exception){
                         console.log(exception);
-                        return null;
+                        console.log(body);
+                        return {
+                            timestamp: msg.date,
+                            topic: msg.topic
+                        };
                     }
-                }).filter(function(msg){
-                    return msg !== null;
                 });
             }
 
@@ -129,9 +133,14 @@ module.exports = function(config) {
                 return results.concat(augmentedPayloads);
             }).then(function(newResults){
                 if(followNext && response.body.next){
+                    console.log("Next Found on url " + url);
+                    console.log("Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
                     return recursiveGET(API_BASE_URL + response.body.next, newResults, status, followNext);
                 }
                 else{
+                    console.log("Next Not Found on url " + url);
+                    console.log("Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
+                    console.log("Total Results: " + newResults.length);
                     return newResults;
                 }
             });

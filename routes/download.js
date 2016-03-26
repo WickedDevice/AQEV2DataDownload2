@@ -139,35 +139,198 @@ router.post('/', function(req, res) {
     var rows = [];
     var minlength = 1e10;
     var headerRow = [];
+    var earliest_date = null;
+    var most_recent_date = null;
+
     Object.keys(result.messages).forEach(function(key){
-      if(result.messages[key].length < minlength){
-        minlength = result.messages[key].length;
+      var first_timestamp = null;
+      if(result.messages[key] && result.messages[key][0] && result.messages[key][0].timestamp !== null) {
+        first_timestamp = moment(result.messages[key][0].timestamp);
       }
+
+      var last_timestamp = null;
+      if(result.messages[key] && result.messages[key][result.messages[key].length-1] && result.messages[key][result.messages[key].length-1].timestamp){
+        last_timestamp = moment(result.messages[key][result.messages[key].length-1].timestamp);
+      }
+
+      if(first_timestamp){
+        if(!earliest_date){
+          earliest_date = first_timestamp;
+          most_recent_date = first_timestamp;
+        }
+        else if(first_timestamp.isBefore(earliest_date)){
+          earliest_date = first_timestamp;
+        }
+        else if(first_timestamp.isAfter(most_recent_date)){
+          most_recent_date = first_timestamp;
+        }
+      }
+
+      if(last_timestamp){
+        if(!earliest_date){
+          earliest_date = last_timestamp;
+          most_recent_date = last_timestamp;
+        }
+        else if(last_timestamp.isBefore(earliest_date)){
+          earliest_date = last_timestamp;
+        }
+        else if(last_timestamp.isAfter(most_recent_date)){
+          most_recent_date = last_timestamp;
+        }
+      }
+
     });
+
+    console.log("Earliest Date: " + earliest_date.format() + ", Most Recent Date: " + most_recent_date.format());
+
     var first = true;
 
-    if(minlength == 1e10){
+    if(!earliest_date || !most_recent_date){
       return null;
     }
 
-    for(var ii = 0; ii < minlength; ii++){
+    if(!most_recent_date.isAfter(earliest_date)){
+      console.log("Most Recent Date is not after earliest date");
+      return null;
+    }
+
+    var invalid_value_string = "---";
+    var window_interval_seconds = 5;
+    var start = moment();
+    var latitude, longitude, altitude;
+    console.log("Beginning post processing at " + start.format());
+
+    var starting_indices_by_topic = {
+      "/orgs/wd/aqe/temperature" : 0,
+      "/orgs/wd/aqe/humidity" : 0,
+      "/orgs/wd/aqe/no2" : 0,
+      "/orgs/wd/aqe/co" : 0,
+      "/orgs/wd/aqe/so2" : 0,
+      "/orgs/wd/aqe/o3" : 0,
+      "/orgs/wd/aqe/pm" : 0
+    };
+
+    // return #N/A if you don't find such a timestamp or if you don't find the target_field
+    // otherwise return the target_field from the record containing the timestamp
+    // if target_field is not provided, return the whole record
+    function find_first_value_near_timestamp(topic, target_timestamp, within_seconds, target_field){
+      var arr = result.messages[topic];
+
+      if(!arr){
+        return {};
+      }
+
+      if(typeof arr !== "object"){
+        return {};
+      }
+
+      if(!arr.length){
+        return {};
+      }
+
+      if(!target_timestamp){
+        return {};
+      }
+
+      if(typeof within_seconds !== "number"){
+        return {};
+      }
+
+      if(within_seconds <= 0){
+        return {};
+      }
+
+      var end_of_target_window = moment(target_timestamp).add(within_seconds, "seconds");
+      for(var ii = starting_indices_by_topic[topic]; ii < arr.length; ii++){
+        if(arr[ii] && arr[ii].timestamp){
+          // if this value is within the window and the target field exists in the associated record
+          // then we should return that value
+          if(target_timestamp.isBefore(arr[ii].timestamp)){
+            if(end_of_target_window.isAfter(arr[ii].timestamp)){
+              starting_indices_by_topic[topic] = ii++;
+              if(target_field && (arr[ii][target_field] !== null)) { // target field requested, and a non-null value exists
+                return arr[ii][target_field] || {};
+              }
+              else if(!target_field){                                // no target field requested, return the whole record
+                return arr[ii] || {};
+              }
+            }
+
+            // otherwise we should return #N/A because the values are only going
+            // to get farther away from this point forward
+            starting_indices_by_topic[topic] = ii;
+            return {};
+          }
+        }
+      }
+
+      // if we search the whole array and don't find a suitable value return #N/A
+      return {};
+    }
+
+    function valueOrInvalid(value){
+      if(value === null || value === undefined){
+        return invalid_value_string;
+      }
+
+      return value;
+    }
+
+    while(earliest_date.isBefore(most_recent_date)){
       var row = [];
-      // everything reports temperature and humidity
-      // use the temperature timestamp as the timestamp for the row
-      row.push(result.messages["/orgs/wd/aqe/temperature"][ii].timestamp);
-      row.push(result.messages["/orgs/wd/aqe/temperature"][ii]['converted-value']);
-      row.push(result.messages["/orgs/wd/aqe/humidity"][ii]['converted-value']);
+      latitude = null;
+      longitude = null;
+      altitude = null;
+
+      row.push(earliest_date.format()); // every row gets a timestamp
+
+      var record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature", earliest_date, window_interval_seconds);
+      row.push(valueOrInvalid(record['converted-value']));
+      if(latitude === null && record["latitude"]){
+        latitude = record["latitude"];
+        longitude = record["longitude"];
+        altitude = record["altitude"];
+      }
+
+      record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity", earliest_date, window_interval_seconds);
+      row.push(valueOrInvalid(record['converted-value']));
+      if(latitude === null && record["latitude"]){
+        latitude = record["latitude"];
+        longitude = record["longitude"];
+        altitude = record["altitude"];
+      }
+
       if(first) {
         headerRow.push("timestamp");
-        headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][ii]['converted-units'] + ']');
+        if(result.messages["/orgs/wd/aqe/temperature"] && result.messages["/orgs/wd/aqe/temperature"].length > 0) {
+          headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][0]['converted-units'] + ']');
+        }
+        else{
+          headerRow.push("temperature[???]");
+        }
         headerRow.push("humidity[%]");
       }
 
-      if(result.messages["/orgs/wd/aqe/no2"]){
-        row.push(result.messages["/orgs/wd/aqe/no2"][ii]['compensated-value']);
-        row.push(result.messages["/orgs/wd/aqe/co"][ii]['compensated-value']);
-        row.push(result.messages["/orgs/wd/aqe/no2"][ii]['raw-value']);
-        row.push(result.messages["/orgs/wd/aqe/co"][ii]['raw-value']);
+      if(result.messages["/orgs/wd/aqe/no2"] || result.messages["/orgs/wd/aqe/co"]){
+        var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
+        var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds)
+        row.push(valueOrInvalid(no2_record['compensated-value']));
+        row.push(valueOrInvalid(co_record['compensated-value']));
+        row.push(valueOrInvalid(no2_record['raw-value']));
+        row.push(valueOrInvalid(co_record['raw-value']));
+
+        if(latitude === null && no2_record["latitude"]){
+          latitude = no2_record["latitude"];
+          longitude = no2_record["longitude"];
+          altitude = no2_record["altitude"];
+        }
+
+        if(latitude === null && co_record["latitude"]){
+          latitude = co_record["latitude"];
+          longitude = co_record["longitude"];
+          altitude = co_record["altitude"];
+        }
+
         if(first) {
           headerRow.push("no2[ppb]");
           headerRow.push("co[ppm]");
@@ -176,11 +339,27 @@ router.post('/', function(req, res) {
         }
       }
 
-      if(result.messages["/orgs/wd/aqe/so2"]){
-        row.push(result.messages["/orgs/wd/aqe/so2"][ii]['compensated-value']);
-        row.push(result.messages["/orgs/wd/aqe/o3"][ii]['compensated-value']);
-        row.push(result.messages["/orgs/wd/aqe/so2"][ii]['raw-value']);
-        row.push(result.messages["/orgs/wd/aqe/o3"][ii]['raw-value']);
+      if(result.messages["/orgs/wd/aqe/so2"] || result.messages["/orgs/wd/aqe/o3"]){
+        var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
+        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds)
+
+        row.push(valueOrInvalid(so2_record['compensated-value']));
+        row.push(valueOrInvalid(o3_record['compensated-value']));
+        row.push(valueOrInvalid(so2_record['raw-value']));
+        row.push(valueOrInvalid(o3_record['raw-value']));
+
+        if(latitude === null && so2_record["latitude"]){
+          latitude = so2_record["latitude"];
+          longitude = so2_record["longitude"];
+          altitude = so2_record["altitude"];
+        }
+
+        if(latitude === null && o3_record["latitude"]){
+          latitude = o3_record["latitude"];
+          longitude = o3_record["longitude"];
+          altitude = o3_record["altitude"];
+        }
+
         if(first){
           headerRow.push("so2[ppb]");
           headerRow.push("o3[ppb]");
@@ -190,8 +369,10 @@ router.post('/', function(req, res) {
       }
 
       if(result.messages["/orgs/wd/aqe/particulate"]){
-        row.push(result.messages["/orgs/wd/aqe/particulate"][ii]['compensated-value']);
-        row.push(result.messages["/orgs/wd/aqe/particulate"][ii]['raw-value']);
+        var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/pm", earliest_date, window_interval_seconds);
+        row.push(valueOrInvalid(pm_record['compensated-value']));
+        row.push(valueOrInvalid(pm_record['raw-value']));
+
         if(first) {
           headerRow.push("pm[ug/m^3]");
           headerRow.push("pm[V]");
@@ -200,18 +381,35 @@ router.post('/', function(req, res) {
 
       // as a trailer every row gets a lat,lng,alt
       // again using temperature as the source for this
-      row.push(result.messages["/orgs/wd/aqe/temperature"][ii].latitude || "---");
-      row.push(result.messages["/orgs/wd/aqe/temperature"][ii].longitude || "---");
-      row.push(result.messages["/orgs/wd/aqe/temperature"][ii].altitude || "---");
+      row.push(valueOrInvalid(latitude));
+      row.push(valueOrInvalid(longitude));
+      row.push(valueOrInvalid(altitude));
+
       if(first) {
         headerRow.push("latitude[deg]");
         headerRow.push("longitude[deg]");
         headerRow.push("altitude[m]");
       }
 
-      rows.push(row);
+      var at_least_one_real_datum_in_row = false;
+      for(var ii = 1; ii < row.length; ii++){
+        if(row[ii] != invalid_value_string){
+          at_least_one_real_datum_in_row = true;
+          break;
+        }
+      }
+
+      if(at_least_one_real_datum_in_row) {
+        rows.push(row);
+      }
+
       first = false;
+
+      // add 5 seconds to the timestamp and continue
+      earliest_date.add(5, "seconds");
     }
+
+    console.log("Post Processing Complete - duration: " + (moment().diff(start)/1000.0) + "seconds");
 
     return {
       serialNumber: result.serialNumber,
