@@ -139,7 +139,21 @@ module.exports = function(config) {
                 }
                 else{
                     console.log("Next Not Found on url " + url);
-                    console.log("Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
+                    // console.log(response.body);
+                    if(response.body.messages && response.body.messages.length > 0) {
+                        console.log("Response contained messages field with " + response.body.messages.length
+                          + " messages, Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
+                    }
+                    else if(!response.body.messages){
+                       console.log("Response did not contain any messages field");
+                    }
+                    else if(response.body.messages.length === 0){
+                       console.log("Response contained messages field with zero messages");
+                    }
+                    else{
+                       console.log("Unexpected response content: ");
+                       console.log(response.body);
+                    }
                     console.log("Total Results: " + newResults.length);
                     return newResults;
                 }
