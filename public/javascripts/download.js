@@ -222,7 +222,7 @@ $(function() {
                             clearInterval(statusIntervalId);
                             $('body').removeClass("loading");
                             if(atLeastOneWithNoError) {
-                                $("#download-file-links").append('<a href="' + resp.uri + '">Download File</a><br/>');
+                                $("#download-file-links").html('<a href="' + resp.uri + '">Download File</a><br/>');
                             }
                         }
 
