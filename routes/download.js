@@ -199,7 +199,7 @@ router.post('/', function(req, res) {
     }
 
     var invalid_value_string = "---";
-    var window_interval_seconds = 5;
+    var window_interval_seconds = 1;
     var start = moment();
     var latitude, longitude, altitude;
     console.log("Beginning post processing at " + start.format());
@@ -480,8 +480,8 @@ router.post('/', function(req, res) {
 
       first = false;
 
-      // add 5 seconds to the timestamp and continue
-      earliest_date.add(5, "seconds");
+      // add window to the timestamp and continue
+      earliest_date.add(window_interval_seconds, "seconds");
     }
 
     console.log("Post Processing Complete - duration: " + (moment().diff(start)/1000.0) + "seconds");
