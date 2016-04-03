@@ -211,7 +211,8 @@ router.post('/', function(req, res) {
       "/orgs/wd/aqe/co" : 0,
       "/orgs/wd/aqe/so2" : 0,
       "/orgs/wd/aqe/o3" : 0,
-      "/orgs/wd/aqe/particulate" : 0
+      "/orgs/wd/aqe/particulate" : 0,
+      "/orgs/wd/aqe/co2": 0
     };
 
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
@@ -433,6 +434,23 @@ router.post('/', function(req, res) {
         if(first) {
           headerRow.push("pm[ug/m^3]");
           headerRow.push("pm[V]");
+        }
+      }
+
+      if(result.messages["/orgs/wd/aqe/co2"]){
+        var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
+
+        row.push(valueOrInvalid(co2_record['converted-value']));
+
+        if(!use_instant_values) {
+          row.push(valueOrInvalid(co2_record['raw-value']));
+        }
+        else{
+          row.push(valueOrInvalid(co2_record['raw-instant-value']));
+        }
+
+        if(first) {
+          headerRow.push("co2[ppm]");
         }
       }
 
