@@ -440,13 +440,15 @@ router.post('/', function(req, res) {
       if(result.messages["/orgs/wd/aqe/co2"]){
         var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
 
-        row.push(valueOrInvalid(co2_record['converted-value']));
 
-        if(!use_instant_values) {
-          row.push(valueOrInvalid(co2_record['raw-value']));
+        if(use_instant_values) {
+          row.push(valueOrInvalid(co2_record['raw-instant-value']));
+        }
+        else if(use_uncompensated_values){
+          row.push(valueOrInvalid(co2_record['converted-value']));
         }
         else{
-          row.push(valueOrInvalid(co2_record['raw-instant-value']));
+          row.push(valueOrInvalid(co2_record['compensated-value']));
         }
 
         if(first) {
