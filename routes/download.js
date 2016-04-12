@@ -542,6 +542,27 @@ router.post('/', function(req, res) {
   }).then(function(){
     // remove the temp folder
     return rimrafAsync(dir);
+  }).then(function(){
+    // open the status file
+    return fs.readFileAsync(params.status.filename, 'utf8');
+  }).then(function(statusFileContents){
+    // parse the contents as JSON
+    try {
+      var status = JSON.parse(statusFileContents);
+      status.complete = true;
+      return status;
+    }
+    catch(err){
+      consol.e.log(err);
+      return null;
+    }
+  }).then(function(json){
+    if(json) {
+      return fs.writeFileAsync(params.status.filename, JSON.stringify(json));
+    }
+    else{
+      return null;
+    }
   });
 });
 

@@ -45,62 +45,6 @@ module.exports = function(config) {
         }).catch(function(err) {
             console.error(err);
         }).then(function(response){
-            // if there's a non-null status object provided
-            // lets reach into the status.filename
-            // and modify the entry for status.serialnumber
-            if(status && status.filename) {
-                return Promise.try(function () {
-                   return fs.readFileAsync(status.filename, 'utf8');
-                }).then(function(content) {
-                    return Promise.try(function () {
-                        if(content == ""){
-                            content = "{}";
-                        }
-                        var json = JSON.parse(content);
-                        if (!json[status.serialNumber]) {
-                            json[status.serialNumber] = {};
-                        }
-
-                        if(response.body.messages) {
-                            json[status.serialNumber].numResults = results.length + response.body.messages.length;
-                        }
-                        else{
-                            json[status.serialNumber].complete = true;
-                            json[status.serialNumber].error = true;
-                            json[status.serialNumber].errorMessage = "No messages found.";
-                        }
-
-                        if(results.length > 0) {
-                            json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
-                        }
-
-                        if(!response.body.next){
-                            json[status.serialNumber].complete = true;
-                        }
-                        else{
-                            json[status.serialNumber].complete = false;
-                        }
-
-                        return json;
-                    }).catch(function () {
-                        console.log(err);
-                        return null;
-                    }).then(function (json) {
-                        if(json) {
-                            return fs.writeFileAsync(status.filename, JSON.stringify(json));
-                        }
-                        else{
-                            return null;
-                        }
-                    });
-                }).then(function(){
-                    return response;
-                });
-            }
-            else {
-                return response; // pass it through
-            }
-        }).then(function(response){
             var augmentedPayloads = [];
             if(response.body.messages){
                 augmentedPayloads = response.body.messages.map(function(msg){
@@ -131,6 +75,62 @@ module.exports = function(config) {
 
             return Promise.try(function(){
                 return results.concat(augmentedPayloads);
+            }).then(function(results){
+                // if there's a non-null status object provided
+                // lets reach into the status.filename
+                // and modify the entry for status.serialnumber
+                if(status && status.filename) {
+                    return Promise.try(function () {
+                        return fs.readFileAsync(status.filename, 'utf8');
+                    }).then(function(content) {
+                        return Promise.try(function () {
+                            if(content == ""){
+                                content = "{}";
+                            }
+                            var json = JSON.parse(content);
+                            if (!json[status.serialNumber]) {
+                                json[status.serialNumber] = {};
+                            }
+
+                            if(response.body.messages) {
+                                json[status.serialNumber].numResults = results.length + response.body.messages.length;
+                            }
+                            else{
+                                json[status.serialNumber].complete = true;
+                                json[status.serialNumber].error = true;
+                                json[status.serialNumber].errorMessage = "No messages found.";
+                            }
+
+                            if(results.length > 0) {
+                                json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
+                            }
+
+                            if(!response.body.next){
+                                json[status.serialNumber].complete = true;
+                            }
+                            else{
+                                json[status.serialNumber].complete = false;
+                            }
+
+                            return json;
+                        }).catch(function(err) {
+                            console.log(err);
+                            return null;
+                        }).then(function (json) {
+                            if(json) {
+                                return fs.writeFileAsync(status.filename, JSON.stringify(json));
+                            }
+                            else{
+                                return null;
+                            }
+                        });
+                    }).then(function(){
+                        return results;
+                    });
+                }
+                else {
+                    return results; // pass it through
+                }
             }).then(function(newResults){
                 if(followNext && response.body.next){
                     console.log("Next Found on url " + url);

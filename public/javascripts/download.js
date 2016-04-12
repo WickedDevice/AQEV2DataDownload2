@@ -196,6 +196,10 @@ $(function() {
                         var atLeastOneWithNoError = false;
 
                         for(var ii = 0; ii < keys.length; ii++){
+                            if(keys[ii] == "complete"){
+                                continue;
+                            }
+
                             if(!data[keys[ii]].complete){
                                 allDone = false;
                             }
@@ -218,7 +222,7 @@ $(function() {
                                 + '</li>');
 
                         }
-                        if(allDone){
+                        if(allDone && data.complete){
                             clearInterval(statusIntervalId);
                             $('body').removeClass("loading");
                             if(atLeastOneWithNoError) {
