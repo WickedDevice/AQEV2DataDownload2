@@ -81,49 +81,50 @@ module.exports = function(config) {
                 // and modify the entry for status.serialnumber
                 if(status && status.filename) {
                     return Promise.try(function () {
-                        return fs.readFileAsync(status.filename, 'utf8');
-                    }).then(function(content) {
-                        return Promise.try(function () {
-                            if(content == ""){
-                                content = "{}";
-                            }
-                            var json = JSON.parse(content);
+                        var content = fs.readFileSync(status.filename, 'utf8');
+                        if(content == ""){
+                            content = "{}";
+                        }
+
+                        var json = null;
+
+                        try {
+                            json = JSON.parse(content);
                             if (!json[status.serialNumber]) {
                                 json[status.serialNumber] = {};
                             }
 
-                            if(response.body.messages) {
+                            if (response.body.messages) {
                                 json[status.serialNumber].numResults = results.length + response.body.messages.length;
                             }
-                            else{
+                            else {
                                 json[status.serialNumber].complete = true;
                                 json[status.serialNumber].error = true;
                                 json[status.serialNumber].errorMessage = "No messages found.";
                             }
 
-                            if(results.length > 0) {
+                            if (results.length > 0) {
                                 json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
                             }
 
-                            if(!response.body.next){
+                            if (!response.body.next) {
                                 json[status.serialNumber].complete = true;
                             }
-                            else{
+                            else {
                                 json[status.serialNumber].complete = false;
                             }
-
-                            return json;
-                        }).catch(function(err) {
+                        }
+                        catch(err){
                             console.log(err);
                             return null;
-                        }).then(function (json) {
-                            if(json) {
-                                return fs.writeFileAsync(status.filename, JSON.stringify(json));
-                            }
-                            else{
-                                return null;
-                            }
-                        });
+                        }
+
+                        if(json) {
+                            return fs.writeFileSync(status.filename, JSON.stringify(json));
+                        }
+                        else{
+                            return null;
+                        }
                     }).then(function(){
                         return results;
                     });

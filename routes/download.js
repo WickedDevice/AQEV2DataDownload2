@@ -553,7 +553,7 @@ router.post('/', function(req, res) {
       return status;
     }
     catch(err){
-      consol.e.log(err);
+      console.log(err);
       return null;
     }
   }).then(function(json){
