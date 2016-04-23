@@ -15,23 +15,107 @@ html(lang="en", ng-app="MyApp")
     script(src="html5shiv.min.js")
     script(src="respond.min.js")
     <![endif]-->
-    link(rel='stylesheet', href='/stylesheets/style.css')    
+    link(rel='stylesheet', href='stylesheets/style.css')
   body
-    div.container
-      block content
+    header.navbar.navbar-default.navbar-static-top
+      nav.container(role='navigation')
+        div.navbar-header
+          a.navbar-brand(href='index.html') Air Quality Egg Dashboard
+          button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='.navbar-collapse')
+            span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+        ul.nav.navbar-nav.navbar-right.collapse.navbar-collapse
+          li
+            a(href='http://shop.wickeddevice.com/product-category/air-quality-egg/') Buy Eggs
+          li.dropdown
+            a.dropdown-toggle(href='/about', data-target='#',data-toggle='dropdown') About
+              span.caret
+            ul.dropdown-menu(role='menu')
+              li
+                a(href='#') Our Story
+              li
+                a(href='mailto:support@wickeddevice.com') Contact Us
+              li.divider
+              li
+                a(href='http://shop.wickeddevice.com/blog/') Blog
+              li.divider
+              li
+                a(href='http://twitter.com/vicatcu') Twitter
+              li
+                a(href='https://www.facebook.com/AirQualityEgg/') Facebook
+    section
+      div.container
+        block content
+
+    div.footer
+      div.container
+        div.row
+          div.col-sm-4.col-md-3.col-xs-6
+            h4 Who We Are
+            p
+              i Air Quality Eggs
+              |  are the best way to measure Air Quality.
+              a(href='http://shop.wickeddevice.com/product-category/air-quality-egg/')  Buy some
+              |  today!
+            p
+              a(href='http://shop.wickeddevice.com/about/') More About Us
+                | &nbsp;
+                i.glyphicon.glyphicon-arrow-right
+
+          div.col-sm-2.col-xs-6.col-md-offset-1
+            h4 Links
+            ul.list-unstyled
+              li
+                a(href='#') Some
+              li
+                a(href='#') Random
+              li
+                a(href='#') Links
+
+          div.clearfix.visible-xs
+
+          div.col-sm-2.col-xs-6
+            h4 Stay in Touch
+            ul.list-unstyled
+              li
+                a(href='mailto:support@wickeddevice.com') Contact Us
+              li
+                a(href='http://shop.wickeddevice.com/blog/') Blog
+              li
+                a(href='http://twitter.com/vicatcu') Twitter
+              li
+                a(href='https://www.facebook.com/AirQualityEgg/') Facebook
+
+          div.col-sm-4.col-md-3.col-md-offset-1.col-xs-6
+            h4 Contact Us
+            ul.list-unstyled
+              li
+                i.glyphicon.glyphicon-globe
+                |  Ithaca, NY
+              li
+                i.glyphicon.glyphicon-phone
+                |  1-607-555-5555
+              li
+                i.glyphicon.glyphicon-envelope
+                | &nbsp;
+                a(href='mailto:support@wickeddevice.com') support@wickeddevice.com
+            p Air Quality Egg Dashboard &copy;2016
+
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    script(type="text/javascript", src="jquery.min.js")
+    script(src="jquery.min.js")
     script(src="angular.min.js")
     script(src="angular-route.min.js")
     script(src="angular-resource.min.js")
 
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    script(type="text/javascript", src="js/bootstrap.min.js")
-    script(type="text/javascript", src="/javascripts/app.js")
+    <!-- Include all compiled pl  ugins (below), or include individual files as needed -->
+    script(src="js/bootstrap.min.js")
+    script(src="javascripts/app.js")
 
     <!-- App -->
-    script(type="text/javascript", src="javascripts/app.js")
-    script(type="text/javascript", src="javascripts/routes.js")
+    script(src="javascripts/app.js")
+    script(src="javascripts/routes.js")
 
     <!-- Directives -->
 
