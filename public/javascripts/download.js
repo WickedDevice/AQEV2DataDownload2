@@ -69,15 +69,15 @@ $(function() {
 
         // Duration
         var duration = "";
-        if($("#durationYears").val() != ""){
-            duration += $("#durationYears").val() + "Y";
-        }
-        if($("#durationMonths").val() != ""){
-            duration += $("#durationMonths").val() + "M";
-        }
-        if($("#durationDays").val() != ""){
-            duration += $("#durationDays").val() + "D";
-        }
+        //if($("#durationYears").val() != ""){
+        //    duration += $("#durationYears").val() + "Y";
+        //}
+        //if($("#durationMonths").val() != ""){
+        //    duration += $("#durationMonths").val() + "M";
+        //}
+        //if($("#durationDays").val() != ""){
+        //    duration += $("#durationDays").val() + "D";
+        //}
 
         if(($("#durationHours").val() != "") || ($("#durationMinutes").val() != "")){
             duration += "T";
@@ -159,6 +159,12 @@ $(function() {
             postObj["end-date"] = moment().format();
         }
 
+        // restrict requests to 24 hours
+        var requested_duration_in_hours = moment(postObj["end-date"]).diff(moment(postObj["start-date"]), 'hours');
+        if(requested_duration_in_hours > 24){
+            alert("Please request no more than 24 hours of data at a time. You asked for " + requested_duration_in_hours + " hours." );
+            return;
+        }
 
         // zip filename, handle the user providing the zip extension, or not
         if($("#zipfilename").val().trim() != ""){

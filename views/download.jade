@@ -27,19 +27,21 @@ block content
       td.ccol
         table
           tr
-            td(style="padding-left:0px;") Yrs
-            td Mos
-            td Days
-            td Hrs
+            //
+              td(style="padding-left:0px;") Yrs
+              td Mos
+              td Days
+            td(style="padding-left:0px;") Hrs
             td Mins
           tr
+            //
+              td(style="padding-left:0px;")
+                input#durationYears(type="number", min="0", max="999")
+              td
+                input#durationMonths(type="number", min="0", max="999")
+              td
+                input#durationDays(type="number", min="0", max="999")
             td(style="padding-left:0px;")
-              input#durationYears(type="number", min="0", max="999")
-            td
-              input#durationMonths(type="number", min="0", max="999")
-            td
-              input#durationDays(type="number", min="0", max="999")
-            td
               input#durationHours(type="number", min="0", max="999")
             td
               input#durationMinutes(type="number", min="0", max="999")
@@ -76,6 +78,7 @@ block content
         div#status
         div
           ul
+            li Please limit your requests to a maximum of 24 hours worth of data
             li Note: The behavior of duration is as follows.
             ul
               li If you pick only a start date and duration, the duration runs from that point forward.
@@ -89,7 +92,7 @@ block content
               li Hours are in 24-hour format, all fields are zero-padded
             li Source code for this web application can be found&nbsp;
               a(href="https://github.com/WickedDevice/AQEV2DataDownload") here
-            li Application last updated on Friday 4/20/2016
+            li Application last updated on Tuesday 4/26/2016
 
   div.modal
   script(src="javascripts/download.js")
