@@ -144,16 +144,24 @@ router.post('/', function(req, res) {
     var headerRow = [];
     var earliest_date = null;
     var most_recent_date = null;
-
+    var sernum = result.serialNumber;
     Object.keys(result.messages).forEach(function(key){
       var first_timestamp = null;
+      var altkey = key + '/' + result.serialNumber;
+
       if(result.messages[key] && result.messages[key][0] && result.messages[key][0].timestamp !== null) {
         first_timestamp = moment(result.messages[key][0].timestamp);
+      }
+      else if(result.messages[altkey] && result.messages[altkey][0] && result.messages[altkey][0].timestamp !== null) {
+        first_timestamp = moment(result.messages[altkey][0].timestamp);
       }
 
       var last_timestamp = null;
       if(result.messages[key] && result.messages[key][result.messages[key].length-1] && result.messages[key][result.messages[key].length-1].timestamp){
         last_timestamp = moment(result.messages[key][result.messages[key].length-1].timestamp);
+      }
+      else if(result.messages[altkey] && result.messages[altkey][result.messages[altkey].length-1] && result.messages[altkey][result.messages[altkey].length-1].timestamp){
+        last_timestamp = moment(result.messages[altkey][result.messages[altkey].length-1].timestamp);
       }
 
       if(first_timestamp){
@@ -214,6 +222,12 @@ router.post('/', function(req, res) {
       "/orgs/wd/aqe/particulate" : 0,
       "/orgs/wd/aqe/co2": 0
     };
+
+    // add the possibility of serial number extended topics
+    var _valid_topics = Object.keys(starting_indices_by_topic);
+    _valid_topics.forEach(function(top){
+      starting_indices_by_topic[top+"/"+sernum] = 0;
+    });
 
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
     // otherwise return the target_field from the record containing the timestamp
@@ -282,6 +296,27 @@ router.post('/', function(req, res) {
       return value;
     }
 
+    var hasOwnProperty = Object.prototype.hasOwnProperty;
+    function isEmptyObject(obj) {
+
+      // null and undefined are "empty"
+      if (obj == null) return true;
+
+      // Assume if it has a length property with a non-zero value
+      // that that property is correct.
+      if (obj.length > 0)    return false;
+      if (obj.length === 0)  return true;
+
+      // Otherwise, does it have any properties of its own?
+      // Note that this doesn't handle
+      // toString and valueOf enumeration bugs in IE < 9
+      for (var key in obj) {
+        if (hasOwnProperty.call(obj, key)) return false;
+      }
+
+      return true;
+    }
+
     while(earliest_date.isBefore(most_recent_date)){
       var row = [];
       latitude = null;
@@ -291,6 +326,10 @@ router.post('/', function(req, res) {
       row.push(earliest_date.format()); // every row gets a timestamp
 
       var record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature", earliest_date, window_interval_seconds);
+      if(isEmptyObject(record)){
+        record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature/" + sernum, earliest_date, window_interval_seconds);
+      }
+
       if(!use_instant_values && !use_uncompensated_values) {
         row.push(valueOrInvalid(record['converted-value']));
       }
@@ -308,6 +347,9 @@ router.post('/', function(req, res) {
       }
 
       record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity", earliest_date, window_interval_seconds);
+      if(isEmptyObject(record)){
+        record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity/" + sernum, earliest_date, window_interval_seconds);
+      }
       if(!use_instant_values && !use_uncompensated_values) {
         row.push(valueOrInvalid(record['converted-value']));
       }
@@ -335,9 +377,16 @@ router.post('/', function(req, res) {
         headerRow.push("humidity[%]");
       }
 
-      if(result.messages["/orgs/wd/aqe/no2"] || result.messages["/orgs/wd/aqe/co"]){
+      if(result.messages["/orgs/wd/aqe/no2"] || result.messages["/orgs/wd/aqe/co"] ||
+          result.messages["/orgs/wd/aqe/no2/" + sernum] || result.messages["/orgs/wd/aqe/co/" + sernum]){
         var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
-        var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds)
+        if(isEmptyObject(no2_record)){
+          no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
+        }
+        var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds);
+        if(isEmptyObject(co_record)){
+          co_record = find_first_value_near_timestamp("/orgs/wd/aqe/co/" + sernum, earliest_date, window_interval_seconds);
+        }
 
         if(!use_uncompensated_values) {
           row.push(valueOrInvalid(no2_record['compensated-value']));
@@ -377,9 +426,16 @@ router.post('/', function(req, res) {
         }
       }
 
-      if(result.messages["/orgs/wd/aqe/so2"] || result.messages["/orgs/wd/aqe/o3"]){
+      if(result.messages["/orgs/wd/aqe/so2"] || result.messages["/orgs/wd/aqe/o3"] ||
+          result.messages["/orgs/wd/aqe/so2/" + sernum] || result.messages["/orgs/wd/aqe/o3/" + sernum] ){
         var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
-        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds)
+        if(isEmptyObject(so2_record)){
+          so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2/" + sernum, earliest_date, window_interval_seconds);
+        }
+        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
+        if(isEmptyObject(o3_record)){
+          o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
+        }
 
         if(!use_uncompensated_values) {
           row.push(valueOrInvalid(so2_record['compensated-value']));
@@ -419,9 +475,11 @@ router.post('/', function(req, res) {
         }
       }
 
-      if(result.messages["/orgs/wd/aqe/particulate"]){
+      if(result.messages["/orgs/wd/aqe/particulate"] || result.messages["/orgs/wd/aqe/particulate/" + sernum] ){
         var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate", earliest_date, window_interval_seconds);
-
+        if(isEmptyObject(pm_record)){
+          pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate/" + sernum, earliest_date, window_interval_seconds);
+        }
         row.push(valueOrInvalid(pm_record['converted-value']));
 
         if(!use_instant_values) {
@@ -437,9 +495,11 @@ router.post('/', function(req, res) {
         }
       }
 
-      if(result.messages["/orgs/wd/aqe/co2"]){
+      if(result.messages["/orgs/wd/aqe/co2"] || result.messages["/orgs/wd/aqe/co2/" + sernum]){
         var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
-
+        if(isEmptyObject(co2_record)){
+          co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2/" + sernum, earliest_date, window_interval_seconds);
+        }
 
         if(use_instant_values) {
           row.push(valueOrInvalid(co2_record['raw-instant-value']));
