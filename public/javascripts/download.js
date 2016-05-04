@@ -75,9 +75,10 @@ $(function() {
         //if($("#durationMonths").val() != ""){
         //    duration += $("#durationMonths").val() + "M";
         //}
-        //if($("#durationDays").val() != ""){
-        //    duration += $("#durationDays").val() + "D";
-        //}
+
+        if($("#durationDays").val() != ""){
+            duration += $("#durationDays").val() + "D";
+        }
 
         if(($("#durationHours").val() != "") || ($("#durationMinutes").val() != "")){
             duration += "T";
@@ -161,8 +162,8 @@ $(function() {
 
         // restrict requests to 24 hours
         var requested_duration_in_hours = moment(postObj["end-date"]).diff(moment(postObj["start-date"]), 'seconds') / 60 / 60;
-        if(requested_duration_in_hours > 24){
-            alert("Please request no more than 24 hours of data at a time. You asked for " + Math.ceil(requested_duration_in_hours) + " hours." );
+        if(requested_duration_in_hours > 168){
+            alert("Please request no more than 168 hours of data at a time. You asked for " + Math.ceil(requested_duration_in_hours) + " hours." );
             return;
         }
 

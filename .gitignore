@@ -28,3 +28,4 @@ node_modules
 
 # Webstore files
 .idea
+current_requests.json

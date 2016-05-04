@@ -13,6 +13,9 @@ module.exports = function(config) {
         }
     };
 
+    var requests_filename = "./current_requests.json";
+    var MAX_CONCURRENT_REQUESTS_IN_FLIGHT = 5;
+
     var API_BASE_URL = "https://api.opensensors.io";
 
     // helper (actually workhorse) method that does a GET to a URL
@@ -20,23 +23,86 @@ module.exports = function(config) {
     // if the response body JSON contains a next element it recursively calls itself
     var getUntilNot400 = function(url){
         var theUrl = url;
-        return Promise.try(function(){
-            return bhttp.get(theUrl, API_POST_OPTIONS);
-        }).then(function(response){
-            if(response.statusCode == 400){
-                console.log(theUrl);
-                console.log(response.body);
-                console.log("Got 400, waiting 30 seconds before trying again");
-                return Promise.delay(30000).then(function(){
+        var requestsInFlight = 0;
+        var current_requests = [];
+        try{
+            var file_contents = fs.readFileSync(requests_filename, 'utf8');
+            if(file_contents.trim() == ""){
+                file_contents = "[]";
+            }
+            current_requests = JSON.parse(file_contents);
+            requestsInFlight = current_requests.length;
+        }
+        catch(e){
+            console.log(requests_filename + ' is corrupt - JSON parse failed');
+        }
+
+        if(requestsInFlight < MAX_CONCURRENT_REQUESTS_IN_FLIGHT) {
+            // if the server is not saturated, go ahead and make a request and increase the saturation level
+
+            // add this request to the list of in flight requests
+            current_requests.push(theUrl);
+            try {
+                fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+            }
+            catch(e){
+                console.log("Failed to write to " + requests_filename);
+                // this is very bad... we really shouldn't proceed at this point with this request
+                // it should in fact be as though we were saturated
+                // just as though we had gotten a 400 response, just try agian sooner
+                console.log("Deferring request " + theUrl + " for 5 seconds");
+                return Promise.delay(5000).then(function () {
                     return getUntilNot400(theUrl);
                 });
             }
-            else{
-                return response;
-            }
-        });
-    };
 
+            return Promise.try(function () {
+                return bhttp.get(theUrl, API_POST_OPTIONS);
+            }).then(function (response) {
+                if (response.statusCode == 400) {
+                    console.log(theUrl);
+                    console.log(response.body);
+                    console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
+                    return Promise.delay(30000).then(function () {
+                        return getUntilNot400(theUrl);
+                    });
+                }
+                else {
+                    // finally! we can retire this request from the list and pass the results on
+                    try{
+                        var file_contents = fs.readFileSync(requests_filename, 'utf8');
+                        if(file_contents.trim() == ""){
+                            file_contents = "[]";
+                        }
+                        current_requests = JSON.parse(file_contents);
+
+                        // remove url from the list
+                        var i = current_requests.indexOf(theUrl);
+                        if(i != -1){
+                            current_requests.splice(i, 1);
+                        }
+                        fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+                    }
+                    catch(e){
+                        console.log(requests_filename + ' is corrupt - JSON parse failed');
+                        // this is also a really bad situation, but I don't know what can be done about it
+                    }
+
+                    return response;
+                }
+            });
+        }
+        else{
+            // otherwise delay for a little while and try again recursively
+            // just as though we had gotten a 400 response, just try agian sooner
+            console.log("Saturated - Deferring request " + theUrl + " for 5 seconds");
+            return Promise.delay(5000).then(function () {
+                return getUntilNot400(theUrl);
+            });
+        }
+
+
+    };
 
     var recursiveGET = function(url, results, status, followNext){
         console.log("Current Num Results: " + results.length + " -> URL: " + url);
@@ -132,7 +198,7 @@ module.exports = function(config) {
                 else {
                     return results; // pass it through
                 }
-            }).then(function(newResults){
+            }).delay(1000).then(function(newResults){
                 if(followNext && response.body.next){
                     console.log("Next Found on url " + url);
                     console.log("Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
