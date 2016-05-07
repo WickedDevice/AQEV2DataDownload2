@@ -1,7 +1,6 @@
 var Promise = require("bluebird");
 var bhttp = Promise.promisifyAll(require("bhttp"));
 var fs = Promise.promisifyAll(require("fs"));
-var extend = require('xtend');
 
 // config encapsulates opensensors-api-key
 // valid keys for config are: api-key (required)
@@ -15,6 +14,12 @@ module.exports = function(config) {
 
     var requests_filename = "./current_requests.json";
     var MAX_CONCURRENT_REQUESTS_IN_FLIGHT = 5;
+
+    // on launch delete ther requests file
+    if(fs.existsSync(requests_filename)) {
+        fs.unlinkSync(requests_filename);
+        console.log("Removed existing requests file: " + requests_filename);
+    }
 
     var API_BASE_URL = "https://api.opensensors.io";
 
@@ -258,7 +263,7 @@ module.exports = function(config) {
 
         url += "/" + val+ urlParams(params);
 
-        var status = params ? extend(params.status) : null;
+        var status = params ? params.status : null;
 
         return recursiveGET(url, [], status, true); // follow_next = true
     }
