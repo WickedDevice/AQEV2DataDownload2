@@ -46,21 +46,24 @@ module.exports = function(config) {
             // if the server is not saturated, go ahead and make a request and increase the saturation level
 
             // add this request to the list of in flight requests
-            current_requests.push(theUrl);
-            try {
-                fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+            // if it's not already in the list
+            if(current_requests.indexOf(theUrl) == -1){
+              current_requests.push(theUrl);
+              try {
+                  fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+              }
+              catch(e){
+                  console.log("Failed to write to " + requests_filename);
+                  // this is very bad... we really shouldn't proceed at this point with this request
+                  // it should in fact be as though we were saturated
+                  // just as though we had gotten a 400 response, just try agian sooner
+                  console.log("Deferring request " + theUrl + " for 5 seconds");
+                  return Promise.delay(5000).then(function () {
+                      return getUntilNot400(theUrl);
+                  });
+              }
             }
-            catch(e){
-                console.log("Failed to write to " + requests_filename);
-                // this is very bad... we really shouldn't proceed at this point with this request
-                // it should in fact be as though we were saturated
-                // just as though we had gotten a 400 response, just try agian sooner
-                console.log("Deferring request " + theUrl + " for 5 seconds");
-                return Promise.delay(5000).then(function () {
-                    return getUntilNot400(theUrl);
-                });
-            }
-
+            
             return Promise.try(function () {
                 return bhttp.get(theUrl, API_POST_OPTIONS);
             }).then(function (response) {
