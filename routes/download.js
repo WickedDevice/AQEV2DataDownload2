@@ -371,14 +371,68 @@ router.post('/', function(req, res) {
         if(result.messages["/orgs/wd/aqe/temperature"] && result.messages["/orgs/wd/aqe/temperature"].length > 0) {
           headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][0]['converted-units'] + ']');
         }
+        else if(result.messages["/orgs/wd/aqe/temperature/" + sernum] && result.messages["/orgs/wd/aqe/temperature/" + sernum].length > 0) {
+          headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature/" + sernum][0]['converted-units'] + ']');
+        }
         else{
           headerRow.push("temperature[???]");
         }
         headerRow.push("humidity[%]");
       }
 
-      if(result.messages["/orgs/wd/aqe/no2"] || result.messages["/orgs/wd/aqe/co"] ||
-          result.messages["/orgs/wd/aqe/no2/" + sernum] || result.messages["/orgs/wd/aqe/co/" + sernum]){
+      if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/o3"]) ||
+        (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
+        var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
+        if(isEmptyObject(no2_record)){
+          no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
+        }
+        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
+        if(isEmptyObject(o3_record)){
+          o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
+        }
+
+        if(!use_uncompensated_values) {
+          row.push(valueOrInvalid(no2_record['compensated-value']));
+          row.push(valueOrInvalid(o3_record['compensated-value']));
+        }
+        else{
+          row.push(valueOrInvalid(no2_record['converted-value']));
+          row.push(valueOrInvalid(o3_record['converted-value']));
+        }
+
+        if(!use_instant_values) {
+          row.push(valueOrInvalid(no2_record['raw-value']));
+          row.push(valueOrInvalid(no2_record['raw-value2']));
+          row.push(valueOrInvalid(o3_record['raw-value']));
+        }
+        else{
+          row.push(valueOrInvalid(no2_record['raw-instant-value']));
+          row.push(valueOrInvalid(no2_record['raw-instant-value2']));
+          row.push(valueOrInvalid(o3_record['raw-instant-value']));
+        }
+
+        if(latitude === null && no2_record["latitude"]){
+          latitude = no2_record["latitude"];
+          longitude = no2_record["longitude"];
+          altitude = no2_record["altitude"];
+        }
+
+        if(latitude === null && o3_record["latitude"]){
+          latitude = o3_record["latitude"];
+          longitude = o3_record["longitude"];
+          altitude = o3_record["altitude"];
+        }
+
+        if(first) {
+          headerRow.push("no2[ppb]");
+          headerRow.push("o3[ppm]");
+          headerRow.push("no2_we[V]");
+          headerRow.push("no2_aux[V]");
+          headerRow.push("o3[V]");
+        }
+      }
+      else if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/co"]) ||
+        (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/co/" + sernum])){
         var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
         if(isEmptyObject(no2_record)){
           no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
@@ -425,9 +479,8 @@ router.post('/', function(req, res) {
           headerRow.push("co[V]");
         }
       }
-
-      if(result.messages["/orgs/wd/aqe/so2"] || result.messages["/orgs/wd/aqe/o3"] ||
-          result.messages["/orgs/wd/aqe/so2/" + sernum] || result.messages["/orgs/wd/aqe/o3/" + sernum] ){
+      else if((result.messages["/orgs/wd/aqe/so2"] && result.messages["/orgs/wd/aqe/o3"]) ||
+        (result.messages["/orgs/wd/aqe/so2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
         var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
         if(isEmptyObject(so2_record)){
           so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2/" + sernum, earliest_date, window_interval_seconds);
@@ -474,8 +527,7 @@ router.post('/', function(req, res) {
           headerRow.push("o3[V]");
         }
       }
-
-      if(result.messages["/orgs/wd/aqe/particulate"] || result.messages["/orgs/wd/aqe/particulate/" + sernum] ){
+      else if(result.messages["/orgs/wd/aqe/particulate"] || result.messages["/orgs/wd/aqe/particulate/" + sernum] ){
         var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate", earliest_date, window_interval_seconds);
         if(isEmptyObject(pm_record)){
           pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate/" + sernum, earliest_date, window_interval_seconds);
@@ -494,8 +546,7 @@ router.post('/', function(req, res) {
           headerRow.push("pm[V]");
         }
       }
-
-      if(result.messages["/orgs/wd/aqe/co2"] || result.messages["/orgs/wd/aqe/co2/" + sernum]){
+      else if(result.messages["/orgs/wd/aqe/co2"] || result.messages["/orgs/wd/aqe/co2/" + sernum]){
         var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
         if(isEmptyObject(co2_record)){
           co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2/" + sernum, earliest_date, window_interval_seconds);
