@@ -1,6 +1,6 @@
 var expressPromiseRouter = require("express-promise-router");
 var router = expressPromiseRouter();
-var Guid = require('guid');
+var uuid = require('node-uuid');
 var aqe = require('../airqualityegg')();
 var extend = require('xtend');
 var Promise = require("bluebird");
@@ -47,7 +47,7 @@ router.get('/status', function(req, res){
 // the downloaded file when it's ready
 router.post('/', function(req, res) {
   // create a guid
-  var guid = Guid.raw();
+  var guid = uuid.v4();
 
   // validate the request
   // what is supported:
