@@ -1,6 +1,6 @@
 var Promise = require("bluebird");
-var bhttp = Promise.promisifyAll(require("bhttp"));
-var fs = Promise.promisifyAll(require("fs"));
+var rp = require('request-promise');
+var fs = require("fs");
 
 // config encapsulates opensensors-api-key
 // valid keys for config are: api-key (required)
@@ -21,7 +21,23 @@ module.exports = function(config) {
         console.log("Removed existing requests file: " + requests_filename);
     }
 
+    // create it blank
+    fs.writeFileSync(requests_filename, JSON.stringify([]));
+
     var API_BASE_URL = "https://api.opensensors.io";
+
+    var httpGet = function(url, options){
+        var options = Object.assign(
+          {},
+          {
+            uri: url,
+            resolveWithFullResponse: true,
+            json: true
+          },
+          options);
+
+        return rp(options);
+    };
 
     // helper (actually workhorse) method that does a GET to a URL
     // it appends the augmented payloads in the response to the second argument that gets passed to it
@@ -39,7 +55,11 @@ module.exports = function(config) {
             requestsInFlight = current_requests.length;
         }
         catch(e){
-            console.log(requests_filename + ' is corrupt - JSON parse failed');
+            console.log(requests_filename + ' is corrupt - JSON parse failed -- deleting it');
+            fs.unlinkSync(requests_filename);
+            file_contents = "[]";
+            current_requests = JSON.parse(file_contents);
+            requestsInFlight = current_requests.length;
         }
 
         if(requestsInFlight < MAX_CONCURRENT_REQUESTS_IN_FLIGHT) {
@@ -47,6 +67,7 @@ module.exports = function(config) {
 
             // add this request to the list of in flight requests
             // if it's not already in the list
+            var exceptionFlag = false;
             if(current_requests.indexOf(theUrl) == -1){
               current_requests.push(theUrl);
               try {
@@ -56,49 +77,56 @@ module.exports = function(config) {
                   console.log("Failed to write to " + requests_filename);
                   // this is very bad... we really shouldn't proceed at this point with this request
                   // it should in fact be as though we were saturated
-                  // just as though we had gotten a 400 response, just try agian sooner
+                  // just as though we had gotten a 400 response, just try again sooner
+                  exceptionFlag = true;
                   console.log("Deferring request " + theUrl + " for 5 seconds");
                   return Promise.delay(5000).then(function () {
                       return getUntilNot400(theUrl);
                   });
               }
             }
-            
-            return Promise.try(function () {
-                return bhttp.get(theUrl, API_POST_OPTIONS);
-            }).then(function (response) {
-                if (response.statusCode == 400) {
-                    console.log(theUrl);
-                    console.log(response.body);
-                    console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
-                    return Promise.delay(30000).then(function () {
-                        return getUntilNot400(theUrl);
-                    });
-                }
-                else {
-                    // finally! we can retire this request from the list and pass the results on
-                    try{
-                        var file_contents = fs.readFileSync(requests_filename, 'utf8');
-                        if(file_contents.trim() == ""){
-                            file_contents = "[]";
-                        }
-                        current_requests = JSON.parse(file_contents);
 
-                        // remove url from the list
-                        var i = current_requests.indexOf(theUrl);
-                        if(i != -1){
-                            current_requests.splice(i, 1);
-                        }
-                        fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+            if(!exceptionFlag) {
+                return Promise.try(function () {
+                    return httpGet(theUrl, API_POST_OPTIONS);
+                }).then(function (response) {
+                    if (response.statusCode == 400) {
+                        console.log(theUrl);
+                        console.log(response.body);
+                        console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
+                        return Promise.delay(30000).then(function () {
+                            return getUntilNot400(theUrl);
+                        });
                     }
-                    catch(e){
-                        console.log(requests_filename + ' is corrupt - JSON parse failed');
-                        // this is also a really bad situation, but I don't know what can be done about it
-                    }
+                    else {
+                        // finally! we can retire this request from the list and pass the results on
+                        try {
+                            var file_contents = fs.readFileSync(requests_filename, 'utf8');
+                            if (file_contents.trim() == "") {
+                                file_contents = "[]";
+                            }
+                            current_requests = JSON.parse(file_contents);
 
-                    return response;
-                }
-            });
+                            // remove url from the list
+                            var i = current_requests.indexOf(theUrl);
+                            if (i != -1) {
+                                current_requests.splice(i, 1);
+                            }
+                            fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+                        }
+                        catch (e) {
+                            console.log(requests_filename + ' is corrupt - JSON parse failed');
+                            // this is also a really bad situation, but I don't know what can be done about it
+                        }
+
+                        return response;
+                    }
+                }).catch(function(error){
+                    console.log("+++++++++++++++++++++++");
+                    console.log("Error: " + error.message);
+                    console.log("+++++++++++++++++++++++");
+                });
+            }
         }
         else{
             // otherwise delay for a little while and try again recursively
@@ -108,20 +136,23 @@ module.exports = function(config) {
                 return getUntilNot400(theUrl);
             });
         }
-
-
     };
 
     var recursiveGET = function(url, results, status, followNext){
-        console.log("Current Num Results: " + results.length + " -> URL: " + url);
+        var theUrl = url;
+        var theResults = results;
+        var theStatus = Object.assign({}, {}, status);
+        var theFollowNext = followNext;
+
+        console.log(theStatus.serialNumber + " Current Num Results: " + theResults.length + " -> URL: " + theUrl);
+
         return Promise.try(function(){
-            return getUntilNot400(url);
-        }).catch(function(err) {
-            console.error(err);
+            return getUntilNot400(theUrl);
         }).then(function(response){
+            var theResponse = response;
             var augmentedPayloads = [];
-            if(response.body.messages){
-                augmentedPayloads = response.body.messages.map(function(msg){
+            if(theResponse.body.messages){
+                augmentedPayloads = theResponse.body.messages.map(function(msg){
                     // as it turns out nan is not valid JSON
                     var body;
                     try {
@@ -148,91 +179,97 @@ module.exports = function(config) {
             }
 
             return Promise.try(function(){
-                return results.concat(augmentedPayloads);
+                return theResults.concat(augmentedPayloads);
             }).then(function(results){
+                var theseResults = results;
                 // if there's a non-null status object provided
                 // lets reach into the status.filename
                 // and modify the entry for status.serialnumber
-                if(status && status.filename) {
-                    return Promise.try(function () {
-                        var content = fs.readFileSync(status.filename, 'utf8');
-                        if(content == ""){
-                            content = "{}";
+                if(theStatus && theStatus.filename) {
+                    var content = fs.readFileSync(theStatus.filename, 'utf8');
+                    if(content == ""){
+                        content = "{}";
+                    }
+
+                    var json = null;
+
+                    try {
+                        json = JSON.parse(content);
+                        if (!json[theStatus.serialNumber]) {
+                            json[theStatus.serialNumber] = {};
                         }
 
-                        var json = null;
+                        if (theResponse.body.messages) {
+                            json[theStatus.serialNumber].numResults = theseResults.length + theResponse.body.messages.length;
+                        }
+                        else {
+                            json[theStatus.serialNumber].complete = true;
+                            json[theStatus.serialNumber].error = true;
+                            json[theStatus.serialNumber].errorMessage = "No messages found.";
+                        }
 
+                        if (theseResults.length > 0) {
+                            json[theStatus.serialNumber].timestamp = theseResults[theseResults.length - 1].timestamp;
+                        }
+
+                        if (!theResponse.body.next) {
+                            json[theStatus.serialNumber].complete = true;
+                        }
+                        else {
+                            json[theStatus.serialNumber].complete = false;
+                        }
+                    }
+                    catch(err){
+                        console.log(err);
+                        return null;
+                    }
+
+                    if(json) {
                         try {
-                            json = JSON.parse(content);
-                            if (!json[status.serialNumber]) {
-                                json[status.serialNumber] = {};
-                            }
-
-                            if (response.body.messages) {
-                                json[status.serialNumber].numResults = results.length + response.body.messages.length;
-                            }
-                            else {
-                                json[status.serialNumber].complete = true;
-                                json[status.serialNumber].error = true;
-                                json[status.serialNumber].errorMessage = "No messages found.";
-                            }
-
-                            if (results.length > 0) {
-                                json[status.serialNumber].timestamp = results[results.length - 1].timestamp;
-                            }
-
-                            if (!response.body.next) {
-                                json[status.serialNumber].complete = true;
-                            }
-                            else {
-                                json[status.serialNumber].complete = false;
-                            }
+                            fs.writeFileSync(theStatus.filename, JSON.stringify(json));
                         }
-                        catch(err){
-                            console.log(err);
-                            return null;
+                        catch(error){
+                            console.log(error.message);
                         }
-
-                        if(json) {
-                            return fs.writeFileSync(status.filename, JSON.stringify(json));
-                        }
-                        else{
-                            return null;
-                        }
-                    }).then(function(){
-                        return results;
-                    });
+                    }
+                    console.log(theStatus.serialNumber + " Wrote "+ JSON.stringify(json) + " to " + theStatus.filename);
+                    return theseResults;
                 }
                 else {
-                    return results; // pass it through
+                    return theseResults; // pass it through
                 }
             }).delay(1000).then(function(newResults){
-                if(followNext && response.body.next){
-                    console.log("Next Found on url " + url);
-                    console.log("Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
-                    return recursiveGET(API_BASE_URL + response.body.next, newResults, status, followNext);
+                if(theFollowNext && theResponse.body.next){
+                    console.log("Next Found on url " + theUrl);
+                    console.log("Last timestamp: " + theResponse.body.messages[theResponse.body.messages.length - 1].date);
+                    return recursiveGET(API_BASE_URL + theResponse.body.next, newResults, theStatus, theFollowNext);
                 }
                 else{
-                    console.log("Next Not Found on url " + url);
+                    console.log(theStatus.serialNumber + " Next Not Found on url " + theUrl);
                     // console.log(response.body);
-                    if(response.body.messages && response.body.messages.length > 0) {
-                        console.log("Response contained messages field with " + response.body.messages.length
-                          + " messages, Last timestamp: " + response.body.messages[response.body.messages.length - 1].date);
+                    if(theResponse.body.messages && theResponse.body.messages.length > 0) {
+                        console.log("Response contained messages field with " + theResponse.body.messages.length
+                          + " messages, Last timestamp: " + theResponse.body.messages[theResponse.body.messages.length - 1].date);
                     }
-                    else if(!response.body.messages){
+                    else if(!theResponse.body.messages){
                        console.log("Response did not contain any messages field");
                     }
-                    else if(response.body.messages.length === 0){
+                    else if(theResponse.body.messages.length === 0){
                        console.log("Response contained messages field with zero messages");
                     }
                     else{
                        console.log("Unexpected response content: ");
-                       console.log(response.body);
+                       console.log(theResponse.body);
                     }
                     console.log("Total Results: " + newResults.length);
                     return newResults;
                 }
             });
+        }).catch(function(error){
+            console.log("***********************");
+            console.log("Error: " + error.message);
+            console.log("***********************");
+            return [];
         });
     };
 
@@ -266,7 +303,7 @@ module.exports = function(config) {
 
         url += "/" + val+ urlParams(params);
 
-        var status = params ? params.status : null;
+        var status = params ? Object.assign({}, {}, params.status) : null;
 
         return recursiveGET(url, [], status, true); // follow_next = true
     }

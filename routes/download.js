@@ -611,16 +611,12 @@ router.post('/', function(req, res) {
 
     numFilesWritten++;
     var filename = dir +'/' + file.serialNumber + '.csv';
-
-    return Promise.try(function() {
-      return fs.appendFileAsync(filename, file.header.join(",")+'\r\n');
-    }).then(function() {
-      return file.rows;
-    }).each(function(row){
+    fs.appendFileSync(filename, file.header.join(",")+'\r\n');
+    file.rows.forEach(function(row){
       numRowsWrittenToFile++;
       // convert timestamp back to user's timezone
       row[0] = moment(row[0]).utcOffset(utcOffset).format("MM/DD/YYYY HH:mm:ss");
-      return fs.appendFileAsync(filename, row.join(",")+'\r\n');
+      fs.appendFileSync(filename, row.join(",")+'\r\n');
     });
   }).then(function() {
     // sweet we finished writing all the data to files
@@ -633,7 +629,7 @@ router.post('/', function(req, res) {
       return {
         serialNumber: serialNumber
       };
-    }).map(function(task){
+    }).each(function(task){
       return Promise.try(function() {
         return fs.readFileAsync(downloadsFolder + '/' + guid + '/' + task.serialNumber + '.csv');
       }).catch(function(err){
@@ -648,30 +644,22 @@ router.post('/', function(req, res) {
       zip.file(task.serialNumber + ".csv", task.data);
     }).then(function(){
       var zipdata = zip.generate({base64: false, compression: 'DEFLATE'});
-      return fs.writeFileAsync(downloadsFolder + '/' + zipFilename + '.zip', zipdata, 'binary');
+      return fs.writeFileSync(downloadsFolder + '/' + zipFilename + '.zip', zipdata, 'binary');
     });
   }).then(function(){
     // remove the temp folder
     return rimrafAsync(dir);
   }).then(function(){
-    // open the status file
-    return fs.readFileAsync(params.status.filename, 'utf8');
-  }).then(function(statusFileContents){
     // parse the contents as JSON
+    // open the status file
+    var statusFileContents = fs.readFileSync(params.status.filename, 'utf8');
     try {
       var status = JSON.parse(statusFileContents);
       status.complete = true;
-      return status;
+      fs.writeFileSync(params.status.filename, JSON.stringify(status));
     }
     catch(err){
       console.log(err);
-      return null;
-    }
-  }).then(function(json){
-    if(json) {
-      return fs.writeFileAsync(params.status.filename, JSON.stringify(json));
-    }
-    else{
       return null;
     }
   });
