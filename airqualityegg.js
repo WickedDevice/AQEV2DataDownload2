@@ -1,7 +1,6 @@
 var config = require('../eggdataconfig')();
 var opensensors = require('./opensensors')(config)
 var Promise = require("bluebird");
-var extend = require('xtend');
 
 module.exports = function() {
     // params has required fields: serial-numbers
@@ -28,7 +27,7 @@ module.exports = function() {
         }).map(function(task){ // task is object {serialNumber: 'xyz'}
             return Promise.try(function(){
                 task.messages = {}; // this will be a set of arrays
-                var lApiParams = extend(apiParams);
+                var lApiParams = Object.assign({}, {}, apiParams);
                 if(lApiParams && lApiParams.status){
                     lApiParams.status.serialNumber = task.serialNumber;
                 }

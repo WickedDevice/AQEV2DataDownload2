@@ -2,7 +2,6 @@ var expressPromiseRouter = require("express-promise-router");
 var router = expressPromiseRouter();
 var uuid = require('node-uuid');
 var aqe = require('../airqualityegg')();
-var extend = require('xtend');
 var Promise = require("bluebird");
 var fs = Promise.promisifyAll(require("fs"));
 var rimrafAsync = Promise.promisify(require("rimraf"));
@@ -52,7 +51,7 @@ router.post('/', function(req, res) {
   // validate the request
   // what is supported:
   //    REQUIRED: at least one serial number
-  var params = extend(req.body);
+  var params = Object.assign({}, {}, req.body);
 
   params["serial-numbers"] = params["serial-numbers"].filter(function(item){
     return item.trim() != "";
