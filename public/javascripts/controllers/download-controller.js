@@ -9,10 +9,20 @@ angular.module('MyApp')
     $scope.zipfilename = "";
     $scope.use_instant_values = false;
     $scope.use_uncompensated_values = false;
+    $scope.showHelp = false;
 
     //$interval(function(){
     //  console.log($scope.start_date);
     //}, 1000);
+
+    $scope.toggleHelp = function(){
+      if($scope.showHelp){
+        $scope.showHelp = false;
+      }
+      else{
+        $scope.showHelp = true;
+      }
+    };
 
     $scope.onDownloadClick = function(){
       // compose a valid JSON object

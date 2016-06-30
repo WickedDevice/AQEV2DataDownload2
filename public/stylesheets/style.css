@@ -110,3 +110,7 @@ body.loading .modal {
 div#status{
   padding-bottom: 10px;
 }
+
+.btn-space {
+  margin-right: 5px;
+}
