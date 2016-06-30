@@ -34,20 +34,26 @@ angular.module('MyApp')
 
       // Start Date
       var startDateStr = $scope.start_date;
-      var startDate = moment(startDateStr);
-      if ($scope.start_date && startDateStr && !startDate.isValid()) {
+      var startDate = null;
+      if(startDateStr) {
+        startDate = moment(startDateStr);
+      }
+      if ($scope.start_date && startDateStr && startDate && !startDate.isValid()) {
         alert("Start date is not complete / valid.");
         return;
       }
 
       // End Date
       var endDateStr = $scope.end_date;
-      var endDate = moment(endDateStr);
-      if ($scope.end_date && endDateStr && !endDate.isValid()) {
+      var endDate = null;
+      if(endDateStr) {
+        endDate = moment(endDateStr);
+      }
+      if ($scope.end_date && endDateStr && endDate && !endDate.isValid()) {
         alert("End date is not complete / valid.");
       }
 
-      if(startDateStr != "" && startDate.isValid() && endDateStr != "" && endDate.isValid()){
+      if(startDateStr != "" && startDate && startDate.isValid() && endDateStr != "" && endDate && endDate.isValid()){
         if(!endDate.isAfter(startDate)){
           alert("End date must be *after* start date.");
           return;
@@ -87,11 +93,11 @@ angular.module('MyApp')
       }
 
       function validStartDate(){
-        return startDateStr != "" && startDate.isValid();
+        return startDateStr != "" && startDate && startDate.isValid();
       }
 
       function validEndDate(){
-        return endDateStr != "" && endDate.isValid();
+        return endDateStr != "" && endDate && endDate.isValid();
       }
 
       function validDuration(){
