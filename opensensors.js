@@ -32,7 +32,8 @@ module.exports = function(config) {
           {
             uri: url,
             resolveWithFullResponse: true,
-            json: true
+            json: true,
+            simple: false
           },
           options);
 
@@ -42,6 +43,27 @@ module.exports = function(config) {
     // helper (actually workhorse) method that does a GET to a URL
     // it appends the augmented payloads in the response to the second argument that gets passed to it
     // if the response body JSON contains a next element it recursively calls itself
+    var retireRequest = function(theUrl){
+        try {
+            var file_contents = fs.readFileSync(requests_filename, 'utf8');
+            if (file_contents.trim() == "") {
+                file_contents = "[]";
+            }
+            var current_requests = JSON.parse(file_contents);
+
+            // remove url from the list
+            var i = current_requests.indexOf(theUrl);
+            if (i != -1) {
+                current_requests.splice(i, 1);
+            }
+            fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+        }
+        catch (e) {
+            console.log(requests_filename + ' is corrupt - JSON parse failed');
+            // this is also a really bad situation, but I don't know what can be done about it
+        }
+    };
+
     var getUntilNot400 = function(url){
         var theUrl = url;
         var requestsInFlight = 0;
@@ -100,30 +122,14 @@ module.exports = function(config) {
                     }
                     else {
                         // finally! we can retire this request from the list and pass the results on
-                        try {
-                            var file_contents = fs.readFileSync(requests_filename, 'utf8');
-                            if (file_contents.trim() == "") {
-                                file_contents = "[]";
-                            }
-                            current_requests = JSON.parse(file_contents);
-
-                            // remove url from the list
-                            var i = current_requests.indexOf(theUrl);
-                            if (i != -1) {
-                                current_requests.splice(i, 1);
-                            }
-                            fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
-                        }
-                        catch (e) {
-                            console.log(requests_filename + ' is corrupt - JSON parse failed');
-                            // this is also a really bad situation, but I don't know what can be done about it
-                        }
-
+                        retireRequest(theUrl);
                         return response;
                     }
                 }).catch(function(error){
+                    // kill this request status file
+                    retireRequest(theUrl);
                     console.log("+++++++++++++++++++++++");
-                    console.log("Error: " + error.message);
+                    console.log("Error: " + error.message + " " + error.stack);
                     console.log("+++++++++++++++++++++++");
                 });
             }
@@ -149,7 +155,7 @@ module.exports = function(config) {
         return Promise.try(function(){
             return getUntilNot400(theUrl);
         }).then(function(response){
-            var theResponse = response;
+                var theResponse = response;
             var augmentedPayloads = [];
             if(theResponse.body.messages){
                 augmentedPayloads = theResponse.body.messages.map(function(msg){
@@ -267,7 +273,7 @@ module.exports = function(config) {
             });
         }).catch(function(error){
             console.log("***********************");
-            console.log("Error: " + error.message);
+            console.log("Error: " + error.message + " " + error.stack);
             console.log("***********************");
             return [];
         });

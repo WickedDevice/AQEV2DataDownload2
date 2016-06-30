@@ -1,58 +1,79 @@
+/*
+ *= require bootstrap/dist/css/bootstrap.min.css
+ *= require_self
+ */
+
+
+.features .glyphicon {
+  font-size: 32px;
+}
+
+.row {
+  margin-bottom: 20px;
+}
+
+.quote {
+  background-color: #444;
+  color: #e1e1e1;
+}
+.quote blockquote {
+  border: none;
+  margin: 0;
+}
+.quote footer {
+  color: #c1c1c1;
+}
+section, header {
+  background-color: #fff;
+}
 body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+
+}
+.footer {
+  padding: 20px 0;
 }
 
-a {
-  color: #00B7FF;
+
+#demo-nav {
+  display: none;
 }
 
-.lcol{
-  vertical-align: top;
-  padding: 5px;
-  text-align:right;
+.show-nav #demo-nav {
+  display: block;
 }
 
-.ccol{
-  vertical-align: top;
-  padding: 5px;
-  text-align: left;
-}
 
-.rcol{
-  vertical-align: top;
-  padding: 5px;
-  text-align: left;
-}
 
-td.ccol input[type="button"]{
-  margin-left: 1px;
-}
 
-td.ccol input[type="datetime-local"]{
-  width: 300px;
-}
 
-td.ccol select{
-  width: 300px;
-}
 
-td.ccol input[type="text"]{
-  width: 300px;
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
 }
-
-td.ccol textarea{
-  width: 300px;
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 200px;
 }
-
-td.ccol select{
-  margin-left: 1px;
+.footer {
+  /*position: absolute;*/
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 200px;
 }
-
-table table td {
-  padding-left: 2px;
-  padding-right: 2px;
-  padding-top: 0px;
+.footer {
+  color: #efefef;
+  background-color: #333;
+}
+.footer a {
+  color: #9af7fe;
+}
+@media only screen and (max-width: 768px) {
+  body { margin-bottom: 400px; }
+  .footer { height: 400px; }
 }
 
 /* Start by setting display:none to make this hidden.
