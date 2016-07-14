@@ -13,13 +13,13 @@ block content
         label.col-md-2.control-label.text-right(for="start_date") Start Date
         div.col-md-6
           input#start_date.md-input.form-control(mdc-datetime-picker="", date="true", time="true",
-            type="text", ng-model="start_date")
+            type="text", ng-model="start_date", placeholder="Click to select date/time")
         div.col-md-4(ng-show="showHelp") Enter the local start time of the data to download.
       div.form-group
         label.col-md-2.control-label.text-right(for="end_date") End Date
         div.col-md-6
           input#end_date.md-input.form-control(mdc-datetime-picker="", date="true", time="true",
-            type="text", ng-model="end_date")
+            type="text", ng-model="end_date", placeholder="Click to select date/time")
         div.col-md-4(ng-show="showHelp") Enter the local end time of the data to download.
       div.form-group
         label.col-md-2.control-label.text-right Duration
