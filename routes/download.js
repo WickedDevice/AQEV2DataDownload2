@@ -390,14 +390,14 @@ router.post('/', function(req, res) {
           o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
         }
 
-        if(!use_uncompensated_values) {
-          row.push(valueOrInvalid(no2_record['compensated-value']));
-          row.push(valueOrInvalid(o3_record['compensated-value']));
-        }
-        else{
-          row.push(valueOrInvalid(no2_record['converted-value']));
-          row.push(valueOrInvalid(o3_record['converted-value']));
-        }
+        //if(!use_uncompensated_values) {
+        row.push(valueOrInvalid(no2_record['compensated-value']));
+        row.push(valueOrInvalid(o3_record['compensated-value']));
+        //}
+        //else{
+        //  row.push(valueOrInvalid(no2_record['converted-value']));
+        //  row.push(valueOrInvalid(o3_record['converted-value']));
+        //}
 
         if(!use_instant_values) {
           row.push(valueOrInvalid(no2_record['raw-value']));
@@ -424,7 +424,7 @@ router.post('/', function(req, res) {
 
         if(first) {
           headerRow.push("no2[ppb]");
-          headerRow.push("o3[ppm]");
+          headerRow.push("o3[ppb]");
           headerRow.push("no2_we[V]");
           headerRow.push("no2_aux[V]");
           headerRow.push("o3[V]");
@@ -441,14 +441,14 @@ router.post('/', function(req, res) {
           co_record = find_first_value_near_timestamp("/orgs/wd/aqe/co/" + sernum, earliest_date, window_interval_seconds);
         }
 
-        if(!use_uncompensated_values) {
-          row.push(valueOrInvalid(no2_record['compensated-value']));
-          row.push(valueOrInvalid(co_record['compensated-value']));
-        }
-        else{
-          row.push(valueOrInvalid(no2_record['converted-value']));
-          row.push(valueOrInvalid(co_record['converted-value']));
-        }
+        //if(!use_uncompensated_values) {
+        row.push(valueOrInvalid(no2_record['compensated-value']));
+        row.push(valueOrInvalid(co_record['compensated-value']));
+        //}
+        //else{
+        //  row.push(valueOrInvalid(no2_record['converted-value']));
+        //  row.push(valueOrInvalid(co_record['converted-value']));
+        //}
 
         if(!use_instant_values) {
           row.push(valueOrInvalid(no2_record['raw-value']));
@@ -489,14 +489,14 @@ router.post('/', function(req, res) {
           o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
         }
 
-        if(!use_uncompensated_values) {
-          row.push(valueOrInvalid(so2_record['compensated-value']));
-          row.push(valueOrInvalid(o3_record['compensated-value']));
-        }
-        else{
-          row.push(valueOrInvalid(so2_record['converted-value']));
-          row.push(valueOrInvalid(o3_record['converted-value']));
-        }
+        //if(!use_uncompensated_values) {
+        row.push(valueOrInvalid(so2_record['compensated-value']));
+        row.push(valueOrInvalid(o3_record['compensated-value']));
+        //}
+        //else{
+        //  row.push(valueOrInvalid(so2_record['converted-value']));
+        //  row.push(valueOrInvalid(o3_record['converted-value']));
+        //}
 
         if(!use_instant_values) {
           row.push(valueOrInvalid(so2_record['raw-value']));
@@ -554,9 +554,9 @@ router.post('/', function(req, res) {
         if(use_instant_values) {
           row.push(valueOrInvalid(co2_record['raw-instant-value']));
         }
-        else if(use_uncompensated_values){
-          row.push(valueOrInvalid(co2_record['converted-value']));
-        }
+        //else if(use_uncompensated_values){
+        //  row.push(valueOrInvalid(co2_record['converted-value']));
+        //}
         else{
           row.push(valueOrInvalid(co2_record['compensated-value']));
         }
