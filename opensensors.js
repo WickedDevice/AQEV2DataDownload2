@@ -1,6 +1,7 @@
 var Promise = require("bluebird");
 var rp = require('request-promise');
 var fs = require("fs");
+var promiseDoWhilst = require('promise-do-whilst');
 
 // config encapsulates opensensors-api-key
 // valid keys for config are: api-key (required)
@@ -65,83 +66,116 @@ module.exports = function(config) {
     };
 
     var getUntilNot400 = function(url){
-        var theUrl = url;
-        var requestsInFlight = 0;
-        var current_requests = [];
-        try{
+      var theUrl = url;
+      var requestsInFlight = 0;
+      var current_requests = [];
+      var requestCompletedSuccessfully = false;
+      var fatalError = null;
+      var got400 = false;
+      var gotSaturated = false;
+      var theResponse = null;
+
+      return promiseDoWhilst(() => {
+        // do this promise
+        return Promise.try(() => {
+          try{
             var file_contents = fs.readFileSync(requests_filename, 'utf8');
             if(file_contents.trim() == ""){
-                file_contents = "[]";
+              file_contents = "[]";
             }
             current_requests = JSON.parse(file_contents);
             requestsInFlight = current_requests.length;
-        }
-        catch(e){
+          }
+          catch(e){
             console.log(requests_filename + ' is corrupt - JSON parse failed -- deleting it');
             fs.unlinkSync(requests_filename);
             file_contents = "[]";
             current_requests = JSON.parse(file_contents);
             requestsInFlight = current_requests.length;
-        }
+          }
 
-        if(requestsInFlight < MAX_CONCURRENT_REQUESTS_IN_FLIGHT) {
+          if(requestsInFlight < MAX_CONCURRENT_REQUESTS_IN_FLIGHT) {
             // if the server is not saturated, go ahead and make a request and increase the saturation level
 
             // add this request to the list of in flight requests
             // if it's not already in the list
-            var exceptionFlag = false;
-            if(current_requests.indexOf(theUrl) == -1){
+            if(current_requests.indexOf(theUrl) == -1) {
               current_requests.push(theUrl);
               try {
-                  fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
+                fs.writeFileSync(requests_filename, JSON.stringify(current_requests));
               }
-              catch(e){
-                  console.log("Failed to write to " + requests_filename);
-                  // this is very bad... we really shouldn't proceed at this point with this request
-                  // it should in fact be as though we were saturated
-                  // just as though we had gotten a 400 response, just try again sooner
-                  exceptionFlag = true;
-                  console.log("Deferring request " + theUrl + " for 5 seconds");
-                  return Promise.delay(5000).then(function () {
-                      return getUntilNot400(theUrl);
-                  });
+              catch (e) {
+                console.log("Failed to write to " + requests_filename);
+                // this is very bad... we really shouldn't proceed at this point with this request
+                // it should in fact be as though we were saturated
+                // just as though we had gotten a 400 response, just try again sooner
+                console.log("Deferring request " + theUrl + " for 5 seconds");
+                return;
               }
-            }
 
-            if(!exceptionFlag) {
-                return Promise.try(function () {
-                    return httpGet(theUrl, API_POST_OPTIONS);
-                }).then(function (response) {
-                    if (response.statusCode == 400) {
-                        console.log(theUrl);
-                        console.log(response.body);
-                        console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
-                        return Promise.delay(30000).then(function () {
-                            return getUntilNot400(theUrl);
-                        });
-                    }
-                    else {
-                        // finally! we can retire this request from the list and pass the results on
-                        retireRequest(theUrl);
-                        return response;
-                    }
-                }).catch(function(error){
-                    // kill this request status file
-                    retireRequest(theUrl);
-                    console.log("+++++++++++++++++++++++");
-                    console.log("Error: " + error.message + " " + error.stack);
-                    console.log("+++++++++++++++++++++++");
-                });
+              return Promise.try(function () {
+                return httpGet(theUrl, API_POST_OPTIONS);
+              }).then(function (response) {
+                if (response.statusCode == 400) {
+                  console.log(theUrl);
+                  console.log(response.body);
+                  console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
+                  got400 = true;
+                }
+                else {
+                  // finally! we can retire this request from the list and pass the results on
+                  retireRequest(theUrl);
+                  requestCompletedSuccessfully = true;
+                  return response;
+                }
+              }).catch(function(error){
+                // kill this request status file
+                retireRequest(theUrl);
+                console.log("+++++++++++++++++++++++");
+                console.log("Error: " + error.message + " " + error.stack);
+                console.log("+++++++++++++++++++++++");
+                fatalError = error;
+              });
             }
+          }
+          else{
+            console.log("Saturated - Deferring request " + theUrl + " for 5 seconds");
+            gotSaturated = true;
+          }
+        }).then((response) => {
+          if(got400){
+            return new Promise((resolve, reject) => {
+              setTimeout(() => {
+                got400 = false;
+                gotSaturated = false;
+                resolve();
+              }, 30000);
+            });
+          }
+          else if(gotSaturated){
+            return new Promise((resolve, reject) => {
+              setTimeout(() => {
+                got400 = false;
+                gotSaturated = false;
+                resolve();
+              }, 5000);
+            });
+          }
+          else{
+            theResponse = response;
+          }
+        });
+      }, () => {
+        // until this function return false, i.e. don't continue
+        return !requestCompletedSuccessfully && !fatalError;
+      }).then(() => {
+        if(!fatalError){
+          return theResponse;
         }
         else{
-            // otherwise delay for a little while and try again recursively
-            // just as though we had gotten a 400 response, just try agian sooner
-            console.log("Saturated - Deferring request " + theUrl + " for 5 seconds");
-            return Promise.delay(5000).then(function () {
-                return getUntilNot400(theUrl);
-            });
+          throw fatalError;
         }
+      });
     };
 
     var recursiveGET = function(url, results, status, followNext){
@@ -155,7 +189,7 @@ module.exports = function(config) {
         return Promise.try(function(){
             return getUntilNot400(theUrl);
         }).then(function(response){
-                var theResponse = response;
+            var theResponse = response;
             var augmentedPayloads = [];
             if(theResponse.body.messages){
                 augmentedPayloads = theResponse.body.messages.map(function(msg){
@@ -197,40 +231,40 @@ module.exports = function(config) {
                         content = "{}";
                     }
 
-                    var json = null;
+                        var json = null;
 
-                    try {
-                        json = JSON.parse(content);
-                        if (!json[theStatus.serialNumber]) {
+                        try {
+                            json = JSON.parse(content);
+                          if (!json[theStatus.serialNumber]) {
                             json[theStatus.serialNumber] = {};
-                        }
+                            }
 
                         if (theResponse.body.messages) {
                             json[theStatus.serialNumber].numResults = theseResults.length + theResponse.body.messages.length;
-                        }
-                        else {
+                            }
+                            else {
                             json[theStatus.serialNumber].complete = true;
                             json[theStatus.serialNumber].error = true;
                             json[theStatus.serialNumber].errorMessage = "No messages found.";
-                        }
+                            }
 
                         if (theseResults.length > 0) {
                             json[theStatus.serialNumber].timestamp = theseResults[theseResults.length - 1].timestamp;
-                        }
+                            }
 
                         if (!theResponse.body.next) {
                             json[theStatus.serialNumber].complete = true;
-                        }
-                        else {
+                            }
+                            else {
                             json[theStatus.serialNumber].complete = false;
+                            }
                         }
-                    }
-                    catch(err){
-                        console.log(err);
-                        return null;
-                    }
+                        catch(err){
+                            console.log(err);
+                            return null;
+                        }
 
-                    if(json) {
+                        if(json) {
                         try {
                             fs.writeFileSync(theStatus.filename, JSON.stringify(json));
                         }

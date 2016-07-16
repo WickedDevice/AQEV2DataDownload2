@@ -31,6 +31,7 @@
     "angular-material": "^1.1.0-rc.5",
     "angular-touch":"^1.5.7",
     "angular-material-datetimepicker": "^1.4.0",
+    "promise-do-whilst": "^1.0.1",
     "html5shiv": "^3.7.3"
   }
 }
