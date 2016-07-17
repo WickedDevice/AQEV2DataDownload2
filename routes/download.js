@@ -6,6 +6,8 @@ var Promise = require("bluebird");
 var fs = Promise.promisifyAll(require("fs"));
 var rimrafAsync = Promise.promisify(require("rimraf"));
 var moment = require('moment');
+var promiseDoWhilst = require('promise-do-whilst');
+
 require('node-zip');
 
 router.get('/', function(req, res) {
@@ -316,293 +318,306 @@ router.post('/', function(req, res) {
       return true;
     }
 
-    while(earliest_date.isBefore(most_recent_date)){
-      var row = [];
-      latitude = null;
-      longitude = null;
-      altitude = null;
+    if(earliest_date.isBefore(most_recent_date)) {
+      return promiseDoWhilst(() => {
+        return Promise.try(() => {
+          var row = [];
+          latitude = null;
+          longitude = null;
+          altitude = null;
 
-      row.push(earliest_date.format()); // every row gets a timestamp
+          row.push(earliest_date.format()); // every row gets a timestamp
 
-      var record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature", earliest_date, window_interval_seconds);
-      if(isEmptyObject(record)){
-        record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature/" + sernum, earliest_date, window_interval_seconds);
-      }
+          var record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature", earliest_date, window_interval_seconds);
+          if(isEmptyObject(record)){
+            record = find_first_value_near_timestamp("/orgs/wd/aqe/temperature/" + sernum, earliest_date, window_interval_seconds);
+          }
 
-      if(!use_instant_values && !use_uncompensated_values) {
-        row.push(valueOrInvalid(record['converted-value']));
-      }
-      else if(use_instant_values){
-        row.push(valueOrInvalid(record['raw-instant-value']));
-      }
-      else if(use_uncompensated_values){
-        row.push(valueOrInvalid(record['raw-value']));
-      }
+          if(!use_instant_values && !use_uncompensated_values) {
+            row.push(valueOrInvalid(record['converted-value']));
+          }
+          else if(use_instant_values){
+            row.push(valueOrInvalid(record['raw-instant-value']));
+          }
+          else if(use_uncompensated_values){
+            row.push(valueOrInvalid(record['raw-value']));
+          }
 
-      if(latitude === null && record["latitude"]){
-        latitude = record["latitude"];
-        longitude = record["longitude"];
-        altitude = record["altitude"];
-      }
+          if(latitude === null && record["latitude"]){
+            latitude = record["latitude"];
+            longitude = record["longitude"];
+            altitude = record["altitude"];
+          }
 
-      record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity", earliest_date, window_interval_seconds);
-      if(isEmptyObject(record)){
-        record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity/" + sernum, earliest_date, window_interval_seconds);
-      }
-      if(!use_instant_values && !use_uncompensated_values) {
-        row.push(valueOrInvalid(record['converted-value']));
-      }
-      else if(use_instant_values){
-        row.push(valueOrInvalid(record['raw-instant-value']));
-      }
-      else if(use_uncompensated_values){
-        row.push(valueOrInvalid(record['raw-value']));
-      }
+          record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity", earliest_date, window_interval_seconds);
+          if(isEmptyObject(record)){
+            record = find_first_value_near_timestamp("/orgs/wd/aqe/humidity/" + sernum, earliest_date, window_interval_seconds);
+          }
+          if(!use_instant_values && !use_uncompensated_values) {
+            row.push(valueOrInvalid(record['converted-value']));
+          }
+          else if(use_instant_values){
+            row.push(valueOrInvalid(record['raw-instant-value']));
+          }
+          else if(use_uncompensated_values){
+            row.push(valueOrInvalid(record['raw-value']));
+          }
 
-      if(latitude === null && record["latitude"]){
-        latitude = record["latitude"];
-        longitude = record["longitude"];
-        altitude = record["altitude"];
-      }
+          if(latitude === null && record["latitude"]){
+            latitude = record["latitude"];
+            longitude = record["longitude"];
+            altitude = record["altitude"];
+          }
 
-      if(first) {
-        headerRow.push("timestamp");
-        if(result.messages["/orgs/wd/aqe/temperature"] && result.messages["/orgs/wd/aqe/temperature"].length > 0) {
-          headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][0]['converted-units'] + ']');
-        }
-        else if(result.messages["/orgs/wd/aqe/temperature/" + sernum] && result.messages["/orgs/wd/aqe/temperature/" + sernum].length > 0) {
-          headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature/" + sernum][0]['converted-units'] + ']');
-        }
-        else{
-          headerRow.push("temperature[???]");
-        }
-        headerRow.push("humidity[%]");
-      }
+          if(first) {
+            headerRow.push("timestamp");
+            if(result.messages["/orgs/wd/aqe/temperature"] && result.messages["/orgs/wd/aqe/temperature"].length > 0) {
+              headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature"][0]['converted-units'] + ']');
+            }
+            else if(result.messages["/orgs/wd/aqe/temperature/" + sernum] && result.messages["/orgs/wd/aqe/temperature/" + sernum].length > 0) {
+              headerRow.push("temperature[" + result.messages["/orgs/wd/aqe/temperature/" + sernum][0]['converted-units'] + ']');
+            }
+            else{
+              headerRow.push("temperature[???]");
+            }
+            headerRow.push("humidity[%]");
+          }
 
-      if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/o3"]) ||
-        (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
-        var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
-        if(isEmptyObject(no2_record)){
-          no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
-        }
-        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
-        if(isEmptyObject(o3_record)){
-          o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
-        }
+          if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/o3"]) ||
+            (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
+            var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
+            if(isEmptyObject(no2_record)){
+              no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
+            }
+            var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
+            if(isEmptyObject(o3_record)){
+              o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
+            }
 
-        //if(!use_uncompensated_values) {
-        row.push(valueOrInvalid(no2_record['compensated-value']));
-        row.push(valueOrInvalid(o3_record['compensated-value']));
-        //}
-        //else{
-        //  row.push(valueOrInvalid(no2_record['converted-value']));
-        //  row.push(valueOrInvalid(o3_record['converted-value']));
-        //}
+            //if(!use_uncompensated_values) {
+            row.push(valueOrInvalid(no2_record['compensated-value']));
+            row.push(valueOrInvalid(o3_record['compensated-value']));
+            //}
+            //else{
+            //  row.push(valueOrInvalid(no2_record['converted-value']));
+            //  row.push(valueOrInvalid(o3_record['converted-value']));
+            //}
 
-        if(!use_instant_values) {
-          row.push(valueOrInvalid(no2_record['raw-value']));
-          row.push(valueOrInvalid(no2_record['raw-value2']));
-          row.push(valueOrInvalid(o3_record['raw-value']));
-        }
-        else{
-          row.push(valueOrInvalid(no2_record['raw-instant-value']));
-          row.push(valueOrInvalid(no2_record['raw-instant-value2']));
-          row.push(valueOrInvalid(o3_record['raw-instant-value']));
-        }
+            if(!use_instant_values) {
+              row.push(valueOrInvalid(no2_record['raw-value']));
+              row.push(valueOrInvalid(no2_record['raw-value2']));
+              row.push(valueOrInvalid(o3_record['raw-value']));
+            }
+            else{
+              row.push(valueOrInvalid(no2_record['raw-instant-value']));
+              row.push(valueOrInvalid(no2_record['raw-instant-value2']));
+              row.push(valueOrInvalid(o3_record['raw-instant-value']));
+            }
 
-        if(latitude === null && no2_record["latitude"]){
-          latitude = no2_record["latitude"];
-          longitude = no2_record["longitude"];
-          altitude = no2_record["altitude"];
-        }
+            if(latitude === null && no2_record["latitude"]){
+              latitude = no2_record["latitude"];
+              longitude = no2_record["longitude"];
+              altitude = no2_record["altitude"];
+            }
 
-        if(latitude === null && o3_record["latitude"]){
-          latitude = o3_record["latitude"];
-          longitude = o3_record["longitude"];
-          altitude = o3_record["altitude"];
-        }
+            if(latitude === null && o3_record["latitude"]){
+              latitude = o3_record["latitude"];
+              longitude = o3_record["longitude"];
+              altitude = o3_record["altitude"];
+            }
 
-        if(first) {
-          headerRow.push("no2[ppb]");
-          headerRow.push("o3[ppb]");
-          headerRow.push("no2_we[V]");
-          headerRow.push("no2_aux[V]");
-          headerRow.push("o3[V]");
-        }
-      }
-      else if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/co"]) ||
-        (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/co/" + sernum])){
-        var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
-        if(isEmptyObject(no2_record)){
-          no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
-        }
-        var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds);
-        if(isEmptyObject(co_record)){
-          co_record = find_first_value_near_timestamp("/orgs/wd/aqe/co/" + sernum, earliest_date, window_interval_seconds);
-        }
+            if(first) {
+              headerRow.push("no2[ppb]");
+              headerRow.push("o3[ppb]");
+              headerRow.push("no2_we[V]");
+              headerRow.push("no2_aux[V]");
+              headerRow.push("o3[V]");
+            }
+          }
+          else if((result.messages["/orgs/wd/aqe/no2"] && result.messages["/orgs/wd/aqe/co"]) ||
+            (result.messages["/orgs/wd/aqe/no2/" + sernum] && result.messages["/orgs/wd/aqe/co/" + sernum])){
+            var no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2", earliest_date, window_interval_seconds);
+            if(isEmptyObject(no2_record)){
+              no2_record = find_first_value_near_timestamp("/orgs/wd/aqe/no2/" + sernum, earliest_date, window_interval_seconds);
+            }
+            var co_record  = find_first_value_near_timestamp("/orgs/wd/aqe/co", earliest_date, window_interval_seconds);
+            if(isEmptyObject(co_record)){
+              co_record = find_first_value_near_timestamp("/orgs/wd/aqe/co/" + sernum, earliest_date, window_interval_seconds);
+            }
 
-        //if(!use_uncompensated_values) {
-        row.push(valueOrInvalid(no2_record['compensated-value']));
-        row.push(valueOrInvalid(co_record['compensated-value']));
-        //}
-        //else{
-        //  row.push(valueOrInvalid(no2_record['converted-value']));
-        //  row.push(valueOrInvalid(co_record['converted-value']));
-        //}
+            //if(!use_uncompensated_values) {
+            row.push(valueOrInvalid(no2_record['compensated-value']));
+            row.push(valueOrInvalid(co_record['compensated-value']));
+            //}
+            //else{
+            //  row.push(valueOrInvalid(no2_record['converted-value']));
+            //  row.push(valueOrInvalid(co_record['converted-value']));
+            //}
 
-        if(!use_instant_values) {
-          row.push(valueOrInvalid(no2_record['raw-value']));
-          row.push(valueOrInvalid(co_record['raw-value']));
-        }
-        else{
-          row.push(valueOrInvalid(no2_record['raw-instant-value']));
-          row.push(valueOrInvalid(co_record['raw-instant-value']));
-        }
+            if(!use_instant_values) {
+              row.push(valueOrInvalid(no2_record['raw-value']));
+              row.push(valueOrInvalid(co_record['raw-value']));
+            }
+            else{
+              row.push(valueOrInvalid(no2_record['raw-instant-value']));
+              row.push(valueOrInvalid(co_record['raw-instant-value']));
+            }
 
-        if(latitude === null && no2_record["latitude"]){
-          latitude = no2_record["latitude"];
-          longitude = no2_record["longitude"];
-          altitude = no2_record["altitude"];
-        }
+            if(latitude === null && no2_record["latitude"]){
+              latitude = no2_record["latitude"];
+              longitude = no2_record["longitude"];
+              altitude = no2_record["altitude"];
+            }
 
-        if(latitude === null && co_record["latitude"]){
-          latitude = co_record["latitude"];
-          longitude = co_record["longitude"];
-          altitude = co_record["altitude"];
-        }
+            if(latitude === null && co_record["latitude"]){
+              latitude = co_record["latitude"];
+              longitude = co_record["longitude"];
+              altitude = co_record["altitude"];
+            }
 
-        if(first) {
-          headerRow.push("no2[ppb]");
-          headerRow.push("co[ppm]");
-          headerRow.push("no2[V]");
-          headerRow.push("co[V]");
-        }
-      }
-      else if((result.messages["/orgs/wd/aqe/so2"] && result.messages["/orgs/wd/aqe/o3"]) ||
-        (result.messages["/orgs/wd/aqe/so2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
-        var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
-        if(isEmptyObject(so2_record)){
-          so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2/" + sernum, earliest_date, window_interval_seconds);
-        }
-        var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
-        if(isEmptyObject(o3_record)){
-          o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
-        }
+            if(first) {
+              headerRow.push("no2[ppb]");
+              headerRow.push("co[ppm]");
+              headerRow.push("no2[V]");
+              headerRow.push("co[V]");
+            }
+          }
+          else if((result.messages["/orgs/wd/aqe/so2"] && result.messages["/orgs/wd/aqe/o3"]) ||
+            (result.messages["/orgs/wd/aqe/so2/" + sernum] && result.messages["/orgs/wd/aqe/o3/" + sernum])){
+            var so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2", earliest_date, window_interval_seconds);
+            if(isEmptyObject(so2_record)){
+              so2_record = find_first_value_near_timestamp("/orgs/wd/aqe/so2/" + sernum, earliest_date, window_interval_seconds);
+            }
+            var o3_record  = find_first_value_near_timestamp("/orgs/wd/aqe/o3", earliest_date, window_interval_seconds);
+            if(isEmptyObject(o3_record)){
+              o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
+            }
 
-        //if(!use_uncompensated_values) {
-        row.push(valueOrInvalid(so2_record['compensated-value']));
-        row.push(valueOrInvalid(o3_record['compensated-value']));
-        //}
-        //else{
-        //  row.push(valueOrInvalid(so2_record['converted-value']));
-        //  row.push(valueOrInvalid(o3_record['converted-value']));
-        //}
+            //if(!use_uncompensated_values) {
+            row.push(valueOrInvalid(so2_record['compensated-value']));
+            row.push(valueOrInvalid(o3_record['compensated-value']));
+            //}
+            //else{
+            //  row.push(valueOrInvalid(so2_record['converted-value']));
+            //  row.push(valueOrInvalid(o3_record['converted-value']));
+            //}
 
-        if(!use_instant_values) {
-          row.push(valueOrInvalid(so2_record['raw-value']));
-          row.push(valueOrInvalid(o3_record['raw-value']));
-        }
-        else{
-          row.push(valueOrInvalid(so2_record['raw-instant-value']));
-          row.push(valueOrInvalid(o3_record['raw-instant-value']));
-        }
+            if(!use_instant_values) {
+              row.push(valueOrInvalid(so2_record['raw-value']));
+              row.push(valueOrInvalid(o3_record['raw-value']));
+            }
+            else{
+              row.push(valueOrInvalid(so2_record['raw-instant-value']));
+              row.push(valueOrInvalid(o3_record['raw-instant-value']));
+            }
 
-        if(latitude === null && so2_record["latitude"]){
-          latitude = so2_record["latitude"];
-          longitude = so2_record["longitude"];
-          altitude = so2_record["altitude"];
-        }
+            if(latitude === null && so2_record["latitude"]){
+              latitude = so2_record["latitude"];
+              longitude = so2_record["longitude"];
+              altitude = so2_record["altitude"];
+            }
 
-        if(latitude === null && o3_record["latitude"]){
-          latitude = o3_record["latitude"];
-          longitude = o3_record["longitude"];
-          altitude = o3_record["altitude"];
-        }
+            if(latitude === null && o3_record["latitude"]){
+              latitude = o3_record["latitude"];
+              longitude = o3_record["longitude"];
+              altitude = o3_record["altitude"];
+            }
 
-        if(first){
-          headerRow.push("so2[ppb]");
-          headerRow.push("o3[ppb]");
-          headerRow.push("so2[V]");
-          headerRow.push("o3[V]");
-        }
-      }
-      else if(result.messages["/orgs/wd/aqe/particulate"] || result.messages["/orgs/wd/aqe/particulate/" + sernum] ){
-        var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate", earliest_date, window_interval_seconds);
-        if(isEmptyObject(pm_record)){
-          pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate/" + sernum, earliest_date, window_interval_seconds);
-        }
-        row.push(valueOrInvalid(pm_record['converted-value']));
+            if(first){
+              headerRow.push("so2[ppb]");
+              headerRow.push("o3[ppb]");
+              headerRow.push("so2[V]");
+              headerRow.push("o3[V]");
+            }
+          }
+          else if(result.messages["/orgs/wd/aqe/particulate"] || result.messages["/orgs/wd/aqe/particulate/" + sernum] ){
+            var pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate", earliest_date, window_interval_seconds);
+            if(isEmptyObject(pm_record)){
+              pm_record = find_first_value_near_timestamp("/orgs/wd/aqe/particulate/" + sernum, earliest_date, window_interval_seconds);
+            }
+            row.push(valueOrInvalid(pm_record['converted-value']));
 
-        if(!use_instant_values) {
-          row.push(valueOrInvalid(pm_record['raw-value']));
-        }
-        else{
-          row.push(valueOrInvalid(pm_record['raw-instant-value']));
-        }
+            if(!use_instant_values) {
+              row.push(valueOrInvalid(pm_record['raw-value']));
+            }
+            else{
+              row.push(valueOrInvalid(pm_record['raw-instant-value']));
+            }
 
-        if(first) {
-          headerRow.push("pm[ug/m^3]");
-          headerRow.push("pm[V]");
-        }
-      }
-      else if(result.messages["/orgs/wd/aqe/co2"] || result.messages["/orgs/wd/aqe/co2/" + sernum]){
-        var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
-        if(isEmptyObject(co2_record)){
-          co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2/" + sernum, earliest_date, window_interval_seconds);
-        }
+            if(first) {
+              headerRow.push("pm[ug/m^3]");
+              headerRow.push("pm[V]");
+            }
+          }
+          else if(result.messages["/orgs/wd/aqe/co2"] || result.messages["/orgs/wd/aqe/co2/" + sernum]){
+            var co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2", earliest_date, window_interval_seconds);
+            if(isEmptyObject(co2_record)){
+              co2_record = find_first_value_near_timestamp("/orgs/wd/aqe/co2/" + sernum, earliest_date, window_interval_seconds);
+            }
 
-        if(use_instant_values) {
-          row.push(valueOrInvalid(co2_record['raw-instant-value']));
-        }
-        //else if(use_uncompensated_values){
-        //  row.push(valueOrInvalid(co2_record['converted-value']));
-        //}
-        else{
-          row.push(valueOrInvalid(co2_record['compensated-value']));
-        }
+            if(use_instant_values) {
+              row.push(valueOrInvalid(co2_record['raw-instant-value']));
+            }
+            //else if(use_uncompensated_values){
+            //  row.push(valueOrInvalid(co2_record['converted-value']));
+            //}
+            else{
+              row.push(valueOrInvalid(co2_record['compensated-value']));
+            }
 
-        if(first) {
-          headerRow.push("co2[ppm]");
-        }
-      }
+            if(first) {
+              headerRow.push("co2[ppm]");
+            }
+          }
 
-      // as a trailer every row gets a lat,lng,alt
-      // again using temperature as the source for this
-      row.push(valueOrInvalid(latitude));
-      row.push(valueOrInvalid(longitude));
-      row.push(valueOrInvalid(altitude));
+          // as a trailer every row gets a lat,lng,alt
+          // again using temperature as the source for this
+          row.push(valueOrInvalid(latitude));
+          row.push(valueOrInvalid(longitude));
+          row.push(valueOrInvalid(altitude));
 
-      if(first) {
-        headerRow.push("latitude[deg]");
-        headerRow.push("longitude[deg]");
-        headerRow.push("altitude[m]");
-      }
+          if(first) {
+            headerRow.push("latitude[deg]");
+            headerRow.push("longitude[deg]");
+            headerRow.push("altitude[m]");
+          }
 
-      var at_least_one_real_datum_in_row = false;
-      for(var ii = 1; ii < row.length; ii++){
-        if(row[ii] != invalid_value_string){
-          at_least_one_real_datum_in_row = true;
-          break;
-        }
-      }
+          var at_least_one_real_datum_in_row = false;
+          for(var ii = 1; ii < row.length; ii++){
+            if(row[ii] != invalid_value_string){
+              at_least_one_real_datum_in_row = true;
+              break;
+            }
+          }
 
-      if(at_least_one_real_datum_in_row) {
-        rows.push(row);
-      }
+          if(at_least_one_real_datum_in_row) {
+            rows.push(row);
+          }
 
-      first = false;
+          first = false;
 
-      // add window to the timestamp and continue
-      earliest_date.add(window_interval_seconds, "seconds");
+          // add window to the timestamp and continue
+          earliest_date.add(window_interval_seconds, "seconds");
+        });
+      }, () => {
+        return earliest_date.isBefore(most_recent_date);
+      }).then(() => {
+        console.log("Post Processing Complete - duration: " + (moment().diff(start) / 1000.0) + "seconds");
+
+        return {
+          serialNumber: result.serialNumber,
+          rows: rows,
+          header: headerRow
+        };
+      });
     }
-
-    console.log("Post Processing Complete - duration: " + (moment().diff(start)/1000.0) + "seconds");
-
-    return {
-      serialNumber: result.serialNumber,
-      rows: rows,
-      header: headerRow
-    };
+    else{
+      return {
+        serialNumber: result.serialNumber,
+        rows: rows,
+        header: headerRow
+      };
+    }
   }).each(function(file){
     if(!file){
       return null;
