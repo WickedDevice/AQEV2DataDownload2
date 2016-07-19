@@ -65,13 +65,13 @@ module.exports = function(config) {
         }
     };
 
-    var getUntilNot400 = function(url){
+    var getUntil200 = function(url){
       var theUrl = url;
       var requestsInFlight = 0;
       var current_requests = [];
       var requestCompletedSuccessfully = false;
       var fatalError = null;
-      var got400 = false;
+      var gotNon200 = false;
       var gotSaturated = false;
       var theResponse = null;
 
@@ -116,11 +116,11 @@ module.exports = function(config) {
               return Promise.try(function () {
                 return httpGet(theUrl, API_POST_OPTIONS);
               }).then(function (response) {
-                if (response.statusCode == 400) {
+                if (response.statusCode !== 200) {
                   console.log(theUrl);
                   console.log(response.body);
-                  console.log("Got 400, waiting 30 seconds before trying " + theUrl + " again");
-                  got400 = true;
+                  console.log("Got Status Code " + response.statusCode + ", waiting 30 seconds before trying " + theUrl + " again");
+                  gotNon200 = true;
                 }
                 else {
                   // finally! we can retire this request from the list and pass the results on
@@ -144,10 +144,10 @@ module.exports = function(config) {
             gotSaturated = true;
           }
         }).then((response) => {
-          if(got400){
+          if(gotNon200){
             return new Promise((resolve, reject) => {
               setTimeout(() => {
-                got400 = false;
+                gotNon200 = false;
                 gotSaturated = false;
                 resolve();
               }, 30000);
@@ -156,7 +156,7 @@ module.exports = function(config) {
           else if(gotSaturated){
             return new Promise((resolve, reject) => {
               setTimeout(() => {
-                got400 = false;
+                gotNon200 = false;
                 gotSaturated = false;
                 resolve();
               }, 5000);
@@ -188,7 +188,7 @@ module.exports = function(config) {
         console.log(theStatus.serialNumber + " Current Num Results: " + theResults.length + " -> URL: " + theUrl);
 
         return Promise.try(function(){
-            return getUntilNot400(theUrl);
+            return getUntil200(theUrl);
         }).then(function(response){
             var theResponse = response;
             var augmentedPayloads = [];
