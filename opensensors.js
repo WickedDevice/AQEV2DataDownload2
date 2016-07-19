@@ -192,7 +192,13 @@ module.exports = function(config) {
         }).then(function(response){
             var theResponse = response;
             var augmentedPayloads = [];
-            if(theResponse.body.messages){
+
+            if(!theResponse || !theResponse.body){
+              console.log("%%%%%%%%%%%%%%%%%%%%%%%%%");
+              console.log("% Unexpected Response: ", JSON.stringify(theResponse,null,2));
+              console.log("%%%%%%%%%%%%%%%%%%%%%%%%%");
+            }
+            else if(theResponse.body.messages){
                 augmentedPayloads = theResponse.body.messages.map(function(msg){
                     // as it turns out nan is not valid JSON
                     var body;
