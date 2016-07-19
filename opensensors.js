@@ -135,7 +135,7 @@ module.exports = function(config) {
                 console.log("Error: " + error.message + " " + error.stack);
                 console.log("+++++++++++++++++++++++");
                 // fatalError = error;
-                got400 = true; // treat it like you got a 400 and move on
+                gotSaturated = true; // treat it like you got a saturated result
               });
             }
           }
