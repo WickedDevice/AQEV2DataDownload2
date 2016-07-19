@@ -134,7 +134,8 @@ module.exports = function(config) {
                 console.log("+++++++++++++++++++++++");
                 console.log("Error: " + error.message + " " + error.stack);
                 console.log("+++++++++++++++++++++++");
-                fatalError = error;
+                // fatalError = error;
+                got400 = true; // treat it like you got a 400 and move on
               });
             }
           }
