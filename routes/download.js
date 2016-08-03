@@ -127,7 +127,7 @@ router.post('/', function(req, res) {
     return fs.writeFileAsync(downloadsFolder + '/' + guid +'.json', JSON.stringify(initJson));
   }).then(function(){
     params.status = {
-      filename: downloadsFolder + '/' + guid + '.json',
+      filename: downloadsFolder + '/' + guid + '.json'
     }
     return aqe(params);
   }).then(function(results){
@@ -394,14 +394,14 @@ router.post('/', function(req, res) {
               o3_record = find_first_value_near_timestamp("/orgs/wd/aqe/o3/" + sernum, earliest_date, window_interval_seconds);
             }
 
-            //if(!use_uncompensated_values) {
-            row.push(valueOrInvalid(no2_record['compensated-value']));
-            row.push(valueOrInvalid(o3_record['compensated-value']));
-            //}
-            //else{
-            //  row.push(valueOrInvalid(no2_record['converted-value']));
-            //  row.push(valueOrInvalid(o3_record['converted-value']));
-            //}
+            if(!use_uncompensated_values) {
+              row.push(valueOrInvalid(no2_record['compensated-value']));
+              row.push(valueOrInvalid(o3_record['compensated-value']));
+            }
+            else{
+              row.push(valueOrInvalid(no2_record['converted-value']));
+              row.push(valueOrInvalid(o3_record['converted-value']));
+            }
 
             if(!use_instant_values) {
               row.push(valueOrInvalid(no2_record['raw-value']));
