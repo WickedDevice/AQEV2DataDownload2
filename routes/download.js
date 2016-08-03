@@ -399,7 +399,7 @@ router.post('/', function(req, res) {
               row.push(valueOrInvalid(o3_record['compensated-value']));
             }
             else{
-              row.push(valueOrInvalid(no2_record['converted-value']));
+              row.push(valueOrInvalid(no2_record['compensated-value']));
               row.push(valueOrInvalid(o3_record['converted-value']));
             }
 
