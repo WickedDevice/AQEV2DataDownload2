@@ -221,7 +221,8 @@ router.post('/', function(req, res) {
       "/orgs/wd/aqe/so2" : 0,
       "/orgs/wd/aqe/o3" : 0,
       "/orgs/wd/aqe/particulate" : 0,
-      "/orgs/wd/aqe/co2": 0
+      "/orgs/wd/aqe/co2": 0,
+      "/orgs/wd/aqe/voc": 0
     };
 
     // add the possibility of serial number extended topics
@@ -567,6 +568,44 @@ router.post('/', function(req, res) {
 
             if(first) {
               headerRow.push("co2[ppm]");
+            }
+          }
+          else if(result.messages["/orgs/wd/aqe/voc"] || result.messages["/orgs/wd/aqe/voc/" + sernum]){
+            var voc_record = find_first_value_near_timestamp("/orgs/wd/aqe/voc", earliest_date, window_interval_seconds);
+            if(isEmptyObject(voc_record)){
+              voc_record = find_first_value_near_timestamp("/orgs/wd/aqe/voc/" + sernum, earliest_date, window_interval_seconds);
+            }
+
+            // available prefixes are:
+            // raw-instant-* means instantaneous and uncompensated [1, 1]
+            // converted-* means not instantaneous and uncompensated [0, 1]
+            // compensated-* means not instantaneous and not uncompensated [0, 0]
+            // compensated-instant-* means instantanteous and not uncompensated [1, 0]
+            if(use_instant_values && use_uncompensated_values) {
+              row.push(valueOrInvalid(voc_record['raw-instant-co2']));
+              row.push(valueOrInvalid(voc_record['raw-instant-tvoc']));
+              row.push(valueOrInvalid(voc_record['raw-instant-resistance']));
+            }
+            else if(!use_instant_values && use_uncompensated_values) {
+              row.push(valueOrInvalid(voc_record['converted-co2']));
+              row.push(valueOrInvalid(voc_record['converted-tvoc']));
+              row.push(valueOrInvalid(voc_record['converted-resistance']));
+            }
+            else if(use_instant_values && !use_uncompensated_values) {
+              row.push(valueOrInvalid(voc_record['compensated-instant-co2']));
+              row.push(valueOrInvalid(voc_record['compensated-instant-tvoc']));
+              row.push(valueOrInvalid(voc_record['compensated-instant-resistance']));
+            }
+            else if(!use_instant_values && !use_uncompensated_values){
+              row.push(valueOrInvalid(voc_record['compensated-co2']));
+              row.push(valueOrInvalid(voc_record['compensated-tvoc']));
+              row.push(valueOrInvalid(voc_record['compensated-resistance']));
+            }
+
+            if(first) {
+              headerRow.push("co2[ppm]");
+              headerRow.push("tvoc[ppb]");
+              headerRow.push("resistance[ohm]");
             }
           }
 
