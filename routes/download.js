@@ -96,6 +96,18 @@ router.post('/', function(req, res) {
   var downloadsFolder = dir.join('/') + "/public/downloads";
   dir = dir.join('/') + "/public/downloads/" + guid;
 
+  // for use with reduce on an array of moments
+  average_time_difference = (pre, cur, idx, arr) => {
+    if(idx > 0){
+      var marginalVal = (cur.diff(arr[idx - 1], "milliseconds"));
+      var newVal = pre + marginalVal/arr.length;
+      return newVal;
+    }
+    else{
+      return pre;
+    }
+  };
+
   // call some function that uses the opensensors api
   // to return a result set that maps back to the request
   // it probably needs to be a map call of some kind that
@@ -145,7 +157,7 @@ router.post('/', function(req, res) {
     var headerRow = [];
     var earliest_date = null;
     var most_recent_date = null;
-    var sernum = result.serialNumber;
+    var sernum = result.serialNumber.trim();
     Object.keys(result.messages).forEach(function(key){
       var first_timestamp = null;
       var altkey = key + '/' + result.serialNumber;
@@ -209,6 +221,7 @@ router.post('/', function(req, res) {
 
     var invalid_value_string = "---";
     var window_interval_seconds = 1;
+
     var start = moment();
     var latitude, longitude, altitude;
     console.log("Beginning post processing at " + start.format());
@@ -230,6 +243,21 @@ router.post('/', function(req, res) {
     _valid_topics.forEach(function(top){
       starting_indices_by_topic[top+"/"+sernum] = 0;
     });
+
+    var timeBasesByTopic = [];
+    Object.keys(starting_indices_by_topic).forEach((topic) => {
+      if(result.messages[topic] && result.messages[topic].length > 0){
+        timeBasesByTopic.push(result.messages[topic].map((val) => {
+          return moment(val.timestamp);
+        }).reduce(average_time_difference, 0));
+      }
+    });
+
+    window_interval_seconds = timeBasesByTopic.reduce((pre, cur, idx, arr) => {
+      return pre + cur/arr.length;
+    }, 0);
+
+    window_interval_seconds /= 1000; // convert to seconds
 
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
     // otherwise return the target_field from the record containing the timestamp
