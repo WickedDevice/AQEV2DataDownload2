@@ -97,6 +97,7 @@ router.post('/', function(req, res) {
   dir = dir.join('/') + "/public/downloads/" + guid;
 
   // for use with reduce on an array of moments
+
   average_time_difference = (pre, cur, idx, arr) => {
     if(idx > 0){
       var marginalVal = (cur.diff(arr[idx - 1], "milliseconds"));
@@ -257,12 +258,76 @@ router.post('/', function(req, res) {
       return pre + cur/arr.length;
     }, 0);
 
-    window_interval_seconds /= 1000; // convert to seconds
+    // don't ever step at less than one second intervals
+    if(window_interval_seconds < 1000){
+      window_interval_seconds = 1000;
+    }
+
+    // having calculated the overall average timebase, recompute it
+    // rejecting outliers from this average
+    timeBasesByTopic = [];
+    Object.keys(starting_indices_by_topic).forEach((topic) => {
+      if(result.messages[topic] && result.messages[topic].length > 0){
+        var numInliers = result.messages[topic].map((val) => {
+          return moment(val.timestamp);
+        }).reduce((pre, cur, idx, arr) => {
+          if(idx > 0){
+            var marginalVal = (cur.diff(arr[idx - 1], "milliseconds"));
+
+            // this is the definition of an outlier...
+            // >= 2x the average time difference is an outlier
+            if(marginalVal >= 2 * window_interval_seconds){
+              // outlier
+              return pre;
+            }
+            else {
+              // inlier
+              return pre + 1;
+            }
+          }
+          else{
+            return pre;
+          }
+        }, 0);
+
+        // now that we know the number of inliers we can progressively compute the average
+        // excluding the outliers
+        if(result.messages[topic] && result.messages[topic].length > 0){
+          timeBasesByTopic.push(result.messages[topic].map((val) => {
+            return moment(val.timestamp);
+          }).reduce((pre, cur, idx, arr) => {
+            if(idx > 0){
+              var marginalVal = (cur.diff(arr[idx - 1], "milliseconds"));
+
+              if(marginalVal >= 2 * window_interval_seconds){
+                //outlier
+                return pre;
+              }
+              else{
+                // inlier
+                return pre + marginalVal/numInliers;
+              }
+            }
+            else{
+              return pre;
+            }
+          }, 0));
+        }
+      }
+    });
+
+    window_interval_seconds = timeBasesByTopic.reduce((pre, cur, idx, arr) => {
+      return pre + cur/arr.length;
+    }, 0);
+
 
     // don't ever step at less than one second intervals
-    if(window_interval_seconds < 1){
-      window_interval_seconds = 1;
+    if(window_interval_seconds < 1000){
+      window_interval_seconds = 1000;
     }
+
+    window_interval_seconds /= 1000; // convert to seconds
+
 
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
     // otherwise return the target_field from the record containing the timestamp
