@@ -259,6 +259,11 @@ router.post('/', function(req, res) {
 
     window_interval_seconds /= 1000; // convert to seconds
 
+    // don't ever step at less than one second intervals
+    if(window_interval_seconds < 1){
+      window_interval_seconds = 1;
+    }
+
     // return #N/A if you don't find such a timestamp or if you don't find the target_field
     // otherwise return the target_field from the record containing the timestamp
     // if target_field is not provided, return the whole record
