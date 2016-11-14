@@ -69,10 +69,10 @@ router.post('/', function(req, res) {
   var zipFilename = "";
   if(params.zipfilename){
     var m = moment();
-    m.utcOffset(startDate.utcOffset());
+    m.utcOffset(utcOffset);
     zipFilename = params.zipfilename + "-" + m.format();
     zipFilename = zipFilename.replace(/[^\x20-\x7E]+/g, ''); // no non-printable characters allowed
-    ['\\\\','/',':','\\*','\\?','"','<','>','\\|'].forEach(function(c){
+    ['\\\\','/',':','\\*','\\?','"','<','>','\\|', "-"].forEach(function(c){
       var regex = new RegExp(c, "g");
       zipFilename = zipFilename.replace(regex, "_"); // turn illegal characters into '_'
     });
