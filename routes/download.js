@@ -118,7 +118,7 @@ router.post('/', function(req, res) {
     , original_url: url
     , save_path: save_location
     , user_id: 'whatever'
-    , email: 'victor.aprea@wickeddevice.com'
+    , email: params.emailorwebhook
     , sequence: 1
     , compensated: !!!use_uncompensated_values
     , instantaneous: !!use_instant_values
