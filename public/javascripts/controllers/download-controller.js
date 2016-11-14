@@ -176,7 +176,7 @@ angular.module('MyApp')
         return;
       }
 
-      if($scope.emailorwebhook.trim().length = ""){
+      if($scope.emailorwebhook.trim().length == ""){
         alert("You must provide an email address or URL where we can send the link to your prepared zip file when it's ready.");
         return;
       }
