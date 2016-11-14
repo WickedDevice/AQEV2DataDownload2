@@ -206,8 +206,10 @@ angular.module('MyApp')
       $http.post("", postObj).success(function (resp) {
         uri = resp.uri;
         guid = resp.guid;
-        $("#download-file-links").html("");
+        $("#download_submit").removeClass("btn-primary").addClass("btn-success");
+        setTimeout(function(){ $("#download_submit").removeClass("btn-success").addClass("btn-primary"); }, 5000);
+        $("#download-file-links").html("<h3 style=\"font-color:#009900\">Thanks! We're building " + resp.filename + " for you now.</h3><h4>You can safely leave the page or submit another job while you await an email with the link to your file</h4>");
         alert("Thanks for submitting your download request.\nWe will email you with a link when your data is ready");
-      });
+      })
     };
   }]);

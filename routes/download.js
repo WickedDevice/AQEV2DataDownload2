@@ -130,7 +130,7 @@ router.post('/', function(req, res) {
   .backoff({delay: 60*1000, type:'exponential'})
   .save();
 
-  res.json({status: "OK"});
+  res.json({status: "OK", filename: zipFilename});
 
 });
 
