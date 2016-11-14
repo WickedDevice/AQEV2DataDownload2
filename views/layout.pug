@@ -1,0 +1,133 @@
+doctype html
+html(lang="en", ng-app="MyApp")
+  head
+    meta(charset="utf-8")
+    meta(http-equiv="X-UA-Compatible", content="IE=edge")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    title= title
+    <!-- Bootstrap -->
+    link(href="css/bootstrap.min.css", rel="stylesheet")
+    link(href="css/bootstrap-theme.css", rel="stylesheet")
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    script(src="html5shiv.min.js")
+    script(src="respond.min.js")
+    <![endif]-->
+    link(rel='stylesheet', href='angular-material.min.css')
+    link(rel='stylesheet', href='material-datetimepicker.min.css')
+    link(rel='stylesheet', href='stylesheets/style.css')
+  body
+    header.navbar.navbar-default.navbar-static-top
+      nav.container(role='navigation')
+        div.navbar-header
+          a.navbar-brand(href='https://airqualityegg.wickeddevice.com/dashboard/#/') Air Quality Egg Dashboard
+          button.navbar-toggle.collapsed(type='button', data-toggle='collapse', data-target='.navbar-collapse')
+            span.sr-only Toggle navigation
+            span.icon-bar
+            span.icon-bar
+            span.icon-bar
+        ul.nav.navbar-nav.navbar-right.collapse.navbar-collapse
+          li
+            a(href='http://shop.wickeddevice.com/product-category/air-quality-egg/') Buy Eggs
+          li.dropdown
+            a.dropdown-toggle(href='/about', data-target='#',data-toggle='dropdown') About
+              span.caret
+            ul.dropdown-menu(role='menu')
+              li
+                a(href='#') Our Story
+              li
+                a(href='mailto:support@wickeddevice.com') Contact Us
+              li.divider
+              li
+                a(href='http://shop.wickeddevice.com/blog/') Blog
+              li.divider
+              li
+                a(href='http://twitter.com/vicatcu') Twitter
+              li
+                a(href='https://www.facebook.com/AirQualityEgg/') Facebook
+    section
+      div.container
+        block content
+
+    div.footer
+      div.container
+        div.row
+          div.col-sm-4.col-md-3.col-xs-6
+            h4 Who We Are
+            p
+              i Air Quality Eggs
+              |  are the best way to measure Air Quality.
+              a(href='http://shop.wickeddevice.com/product-category/air-quality-egg/')  Buy some
+              |  today!
+            p
+              a(href='http://shop.wickeddevice.com/about/') More About Us
+                | &nbsp;
+                i.glyphicon.glyphicon-arrow-right
+
+          div.col-sm-2.col-xs-6.col-md-offset-1
+            h4 Links
+            ul.list-unstyled
+              li
+                a(href='#') Some
+              li
+                a(href='#') Random
+              li
+                a(href='#') Links
+
+          div.clearfix.visible-xs
+
+          div.col-sm-2.col-xs-6
+            h4 Stay in Touch
+            ul.list-unstyled
+              li
+                a(href='mailto:support@wickeddevice.com') Contact Us
+              li
+                a(href='http://shop.wickeddevice.com/blog/') Blog
+              li
+                a(href='http://twitter.com/vicatcu') Twitter
+              li
+                a(href='https://www.facebook.com/AirQualityEgg/') Facebook
+
+          div.col-sm-4.col-md-3.col-md-offset-1.col-xs-6
+            h4 Contact Us
+            ul.list-unstyled
+              li
+                i.glyphicon.glyphicon-globe
+                |  Ithaca, NY
+              li
+                i.glyphicon.glyphicon-phone
+                |  1-607-555-5555
+              li
+                i.glyphicon.glyphicon-envelope
+                | &nbsp;
+                a(href='mailto:support@wickeddevice.com') support@wickeddevice.com
+            p Air Quality Egg Dashboard &copy;2016
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    script(src="jquery.min.js")
+    script(src="angular.min.js")
+    script(src="angular-route.min.js")
+    script(src="angular-resource.min.js")
+    script(src="angular-animate.min.js")
+    script(src="angular-aria.min.js")
+    script(src="angular-material.min.js")
+    script(src="min/moment-with-locales.min.js")
+    script(src="angular-touch.min.js")
+    script(src="angular-material-datetimepicker.min.js")
+
+    <!-- Include all compiled pl  ugins (below), or include individual files as needed -->
+    script(src="js/bootstrap.min.js")
+
+    <!-- App -->
+    script(src="javascripts/app.js")
+    script(src="javascripts/routes.js")
+
+    <!-- Directives -->
+
+    <!-- Controllers -->
+    script(src="javascripts/controllers/download-controller.js")
+    <!-- Filters -->
+
+    <!-- Services -->

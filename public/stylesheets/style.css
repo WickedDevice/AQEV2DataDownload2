@@ -1,0 +1,116 @@
+/*
+ *= require bootstrap/dist/css/bootstrap.min.css
+ *= require_self
+ */
+
+
+.features .glyphicon {
+  font-size: 32px;
+}
+
+.row {
+  margin-bottom: 20px;
+}
+
+.quote {
+  background-color: #444;
+  color: #e1e1e1;
+}
+.quote blockquote {
+  border: none;
+  margin: 0;
+}
+.quote footer {
+  color: #c1c1c1;
+}
+section, header {
+  background-color: #fff;
+}
+body {
+
+}
+.footer {
+  padding: 20px 0;
+}
+
+
+#demo-nav {
+  display: none;
+}
+
+.show-nav #demo-nav {
+  display: block;
+}
+
+
+
+
+
+
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  /* Margin bottom by footer height */
+  margin-bottom: 200px;
+}
+.footer {
+  /*position: absolute;*/
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 200px;
+}
+.footer {
+  color: #efefef;
+  background-color: #333;
+}
+.footer a {
+  color: #9af7fe;
+}
+@media only screen and (max-width: 768px) {
+  body { margin-bottom: 400px; }
+  .footer { height: 400px; }
+}
+
+/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+  display:    none;
+  position:   fixed;
+  z-index:    1000;
+  top:        0;
+  left:       0;
+  height:     100%;
+  width:      100%;
+  background: rgba( 255, 255, 255, .8 )
+  url('../images/ajax-loader.gif')
+  50% 50%
+  no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+  overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+  display: block;
+}
+
+div#status{
+  padding-bottom: 10px;
+}
+
+.btn-space {
+  margin-right: 5px;
+}

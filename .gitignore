@@ -1,7 +1,6 @@
 # Logs
 logs
 *.log
-npm-debug.log*
 
 # Runtime data
 pids
@@ -24,6 +23,7 @@ coverage
 build/Release
 
 # Dependency directory
+<<<<<<< HEAD
 node_modules
 
 # Optional npm cache directory
@@ -33,3 +33,10 @@ node_modules
 .node_repl_history
 
 .idea/
+=======
+# https://www.npmjs.org/doc/misc/npm-faq.html#should-i-check-my-node_modules-folder-into-git
+node_modules
+
+# Webstore files
+.idea
+current_requests.json

@@ -1,0 +1,84 @@
+extends layout
+
+block content
+  div(ng-controller="DownloadController as download")
+    h1 Download Data
+    form.form-horizontal
+      div.form-group
+        label.col-md-2.control-label.text-right(for="serial_numbers") Serial Number(s)
+        div.col-md-6
+          textarea#serial_numbers.form-control(placeholder="egg0080...", ng-model="serial_numbers")
+        div.col-md-4(ng-show="showHelp") One serial number per line, e.g. egg0080...
+      div.form-group
+        label.col-md-2.control-label.text-right(for="start_date") Start Date
+        div.col-md-6
+          input#start_date.md-input.form-control(mdc-datetime-picker="", date="true", time="true",
+            type="text", ng-model="start_date", placeholder="Click to select date/time")
+        div.col-md-4(ng-show="showHelp") Enter the local start time of the data to download.
+      div.form-group
+        label.col-md-2.control-label.text-right(for="end_date") End Date
+        div.col-md-6
+          input#end_date.md-input.form-control(mdc-datetime-picker="", date="true", time="true",
+            type="text", ng-model="end_date", placeholder="Click to select date/time")
+        div.col-md-4(ng-show="showHelp") Enter the local end time of the data to download.
+      div.form-group
+        label.col-md-2.control-label.text-right Duration
+        label.col-md-1.control-label.text-right(for="durationDays") Days
+        div.col-md-1
+          input#durationDays.form-control(type="number", min="0", max="999", ng-model="durationDays")
+        label.col-md-1.control-label.text-right(for="durationHours") Hours
+        div.col-md-1
+          input#durationHours.form-control(type="number", min="0", max="999", ng-model="durationHours")
+        label.col-md-1.control-label.text-right(for="durationMinutes") Minutes
+        div.col-md-1
+          input#durationMinutes.form-control(type="number", min="0", max="999", ng-model="durationMinutes")
+        div.col-md-4(ng-show="showHelp") Duration can be used with a bounding date.
+      div.form-group
+        label.col-md-2.control-label.text-right(for="zipfilename") Filename
+        div.col-md-6
+          input#zipfilename.form-control(type="text", ng-model="zipfilename", placeholder="(optional)")
+        div.col-md-4(ng-show="showHelp") Enter a name for the generated zip file, or we'll make one up for you randomly
+      div.form-group
+        div.col-md-offset-2.col-md-6
+          div.checkbox
+            label
+              input#use_instant_values(type="checkbox", ng-model="use_instant_values")
+              | Instantaneous Values
+        div.col-md-4(ng-show="showHelp") Checking the box gets instantaneous readings where possible (currently only for 'raw' values)
+      div.form-group
+        div.col-md-offset-2.col-md-6
+          div.checkbox
+            label
+              input#use_uncompensated_values(type="checkbox", ng-model="use_uncompensated_values")
+              | Uncompensated Values
+        div.col-md-4(ng-show="showHelp") Checking the box gets raw readings where possible (e.g. 'converted' rather than 'compensated' values). The Instantaneous checkbox takes precedence over the Uncompensated checkbox.
+      div.row
+        div.col-md-offset-2.col-md-6
+          button#download_submit.btn.btn-primary.btn-space(type="button", ng-click="onDownloadClick()") Download Data
+          button.btn.btn-info(type="button", ng-click="toggleHelp()") Toggle Help
+        div.col-md-4(ng-show="showHelp") Your file will be generated and then you will be presented with a link to download a zip (<b>please be patient</b>)
+      div.row
+        div.col-md-offset-2.col-md-4#download-file-links.ccol(colspan="2")
+      div.row
+        div.col-md-offset-2.col-md-10
+          div#status
+          div
+            ul
+              li Please limit your requests to a maximum of 168 hours (1 week) worth of data at a time
+              li(ng-show="showHelp") We are pretty sure there is a bug related to long duration requests where OpenSensors API cuts off prematurely, and w'ere working with them to get to the bottom of it
+              li(ng-show="showHelp") Note: The behavior of duration is as follows.
+              ul(ng-show="showHelp")
+                li If you pick only a start date and duration, the duration runs from that point forward.
+                li If you pick only an end date and duration, the duration runs from that point backward.
+                li If you only give a duration, with neither a start date nor an end date, the end date is implied to be now.
+                li If you provide only a start date, the end date is implied to be now.
+              li(ng-show="showHelp") Note: The timestamps in downloaded files have thie following format:
+              ul(ng-show="showHelp")
+                li MM/DD/YYYY HH:mm:ss
+                li Time is adjusted to the local timezone of your computer
+                li Hours are in 24-hour format, all fields are zero-padded
+              li(ng-show="showHelp") Source code for this web application can be found&nbsp;
+                a(href="https://github.com/WickedDevice/AQEV2DataDownload") here
+              li Application last updated on Monday 9/26/2016
+
+  div.modal
