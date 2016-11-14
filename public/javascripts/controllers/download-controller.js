@@ -195,59 +195,11 @@ angular.module('MyApp')
       var uri = null;
       var guid = null;
       var statusIntervalId = null;
-      $('body').addClass("loading");
       $http.post("", postObj).success(function (resp) {
         uri = resp.uri;
         guid = resp.guid;
         $("#download-file-links").html("");
-        var status_list = $("#status").html("");
-        statusIntervalId = $interval(function(){
-          $http.get('/download/status?guid='+guid).success(function(data, textStatus, jqXHR){
-            if(data){
-              $("#status").html("<ul></ul>");
-              var status_list = $("#status ul")
-              var keys = Object.keys(data);
-              var allDone = true;
-              var atLeastOneWithNoError = false;
-
-              for(var ii = 0; ii < keys.length; ii++){
-                if(keys[ii] == "complete"){
-                  continue;
-                }
-
-                if(!data[keys[ii]].complete){
-                  allDone = false;
-                }
-
-                var m = moment(data[keys[ii]].timestamp);
-                // convert m to local time
-                m.utcOffset(moment().utcOffset());
-                var numResults = data[keys[ii]].numResults || 0;
-
-                if(!data[keys[ii]].error){
-                  atLeastOneWithNoError = true;
-                }
-
-                status_list.append("<li>"
-                  +keys[ii] + ': '
-                  + (data[keys[ii]].complete ? 'done' : (numResults > 0 ? 'in progress' : 'pending'))
-                  + ' / ' + numResults
-                  + ' / ' + (data[keys[ii]].timestamp ? m.format("MM/DD/YYYY, hh:mm:ss A") : '---')
-                  + ((data[keys[ii]].error) ? " [Error: " + data[keys[ii]].errorMessage + "]" : "" )
-                  + '</li>');
-
-              }
-              if(allDone && data.complete){
-                $interval.cancel(statusIntervalId);
-                statusIntervalId = undefined;
-                $('body').removeClass("loading");
-                if(atLeastOneWithNoError) {
-                  $("#download-file-links").html('<a href="' + resp.uri + '">Download File</a><br/>');
-                }
-              }
-            }
-          });
-        }, 5000);
+        alert("Thanks for submitting your download request.\nWe will email you with a link when your data is ready");
       });
     };
   }]);
