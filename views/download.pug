@@ -39,6 +39,11 @@ block content
           input#zipfilename.form-control(type="text", ng-model="zipfilename", placeholder="(optional)")
         div.col-md-4(ng-show="showHelp") Enter a name for the generated zip file, or we'll make one up for you randomly
       div.form-group
+        label.col-md-2.control-label.text-right(for="emailorwebhook") Email or URL
+        div.col-md-6
+          input#emailorwebhook.form-control(type="text", ng-model="emailorwebhook", placeholder="example@gmail.com")
+        div.col-md-4(ng-show="showHelp") Enter an email address or a web URL, where we will send a link to the result zip when it's ready
+      div.form-group
         div.col-md-offset-2.col-md-6
           div.checkbox
             label

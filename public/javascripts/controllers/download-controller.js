@@ -10,7 +10,8 @@ angular.module('MyApp')
     $scope.use_instant_values = false;
     $scope.use_uncompensated_values = false;
     $scope.showHelp = false;
-
+    $scope.emailorwebhook = "";  
+ 
     //$interval(function(){
     //  console.log($scope.start_date);
     //}, 1000);
@@ -174,6 +175,13 @@ angular.module('MyApp')
         alert("Please request no more than 168 hours of data at a time. You asked for " + Math.ceil(requested_duration_in_hours) + " hours." );
         return;
       }
+
+      if($scope.emailorwebhook.trim().length = ""){
+        alert("You must provide an email address or URL where we can send the link to your prepared zip file when it's ready.");
+        return;
+      }
+      postObj.emailorwebhook = $scope.emailorwebhook;
+
 
       // zip filename, handle the user providing the zip extension, or not
       if($scope.zipfilename){
