@@ -4,6 +4,8 @@ var uuid = require('node-uuid');
 var Promise = require("bluebird");
 var moment = require('moment');
 var promiseDoWhilst = require('promise-do-whilst');
+var kue = require('kue')
+  , queue = kue.createQueue();
 
 router.get('/', function(req, res) {
   res.render('download', { title: 'Air Quality Egg v2 - Download Data' });
@@ -12,6 +14,23 @@ router.get('/', function(req, res) {
 router.get('/status', function(req, res){
 
 });
+
+// this function returns a string to append to a url path
+// to add the [flat] params object as a querystring
+function urlParams(params){
+  var ret = "";
+  if(Object.keys(params).length > 0){ // if there are any optional params
+    ret += '?';
+    var encodeParams = Object.keys(params).map(function(key){
+      if(key != "status") { // special case, not an OpenSensors parameter
+        return key + '=' + encodeURIComponent(params[key]);
+      }
+    });
+
+    ret += encodeParams.join('&');
+  }
+  return ret;
+}
 
 // the client side javascript posts the download configuration data as a json object
 // and gets back a GUID that is a handle to check
@@ -36,10 +55,16 @@ router.post('/', function(req, res) {
   }
 
   var utcOffset = 0;
+  var startDate;
+  var endDate;
   if(params["start-date"] && (params["start-date"] != "")){
-    var startDate = moment(params["start-date"]);
+    startDate = moment(params["start-date"]);
     utcOffset = moment.parseZone(startDate).utcOffset();
   }
+  else if(params["end-date"] && (params["end-date"] != "")){
+    startDate = moment(params["end-date"]);
+    utcOffset = moment.parseZone(endDate).utcOffset();
+  } 
 
   var zipFilename = "";
   if(params.zipfilename){
@@ -66,6 +91,44 @@ router.post('/', function(req, res) {
   dir = dir.slice(0, dir.length-1);
   var downloadsFolder = dir.join('/') + "/public/downloads";
   dir = dir.join('/') + "/public/downloads/" + guid;
+
+  startDate = params["start-date"] == "" ? null : params["start-date"];
+  endDate = params["end-date"] == "" ? null : params["end-date"];
+
+  var apiParams = {};
+  if(startDate){
+    apiParams["start-date"] = startDate;
+  }
+  if(endDate){
+    apiParams["end-date"] = endDate;
+  }
+  apiParams.status = params.status;
+
+  var urlparams = urlParams(apiParams);
+
+  var url = 'https://api.opensensors.io/v1/messages/device/${serial-number}' + urlparams;
+  var save_location = dir;
+  var serials = params["serial-numbers"].slice();
+
+  var job = queue.create('download', {
+      title: 'downloading url ' + url.replace('${serial-number}', serials[0])
+    , original_serials: serials.slice()
+    , serials: serials.slice()
+    , url: url
+    , original_url: url
+    , save_path: save_location
+    , user_id: 'whatever'
+    , email: 'victor.aprea@wickeddevice.com'
+    , sequence: 1
+    , compensated: !!!use_uncompensated_values
+    , instantaneous: !!use_instant_values
+    , utcOffset: utcOffset
+    , zipfilename: zipFilename
+  })
+  .priority('high')
+  .attempts(10)
+  .backoff({delay: 60*1000, type:'exponential'})
+  .save();
 
 });
 
