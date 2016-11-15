@@ -40,7 +40,8 @@ angular.module('MyApp')
       }
 
       var postObj = {
-        "serial-numbers": validSerialNumbers
+        "serial-numbers": validSerialNumbers,
+        "moment": moment().format()
       };
 
       // Start Date

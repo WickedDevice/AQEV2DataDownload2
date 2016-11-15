@@ -61,11 +61,17 @@ router.post('/', function(req, res) {
     startDate = moment(params["start-date"]);
     utcOffset = moment.parseZone(startDate).utcOffset();
   }
+  
+  if(params["moment"] && (params["moment"] != "")){ 
+    utcOffset = moment.parseZone(params["moment"]).utcOffset();
+  }
+  else if(params["start-date"] && (params["start-date"] != "")){
+    utcOffset = moment.parseZone(params["start-date"]).utcOffset();
+  }
   else if(params["end-date"] && (params["end-date"] != "")){
-    startDate = moment(params["end-date"]);
-    utcOffset = moment.parseZone(endDate).utcOffset();
+    utcOffset = moment.parseZone(params["end-date"]).utcOffset();
   } 
-
+  
   var zipFilename = "";
   if(params.zipfilename){
     var m = moment();
