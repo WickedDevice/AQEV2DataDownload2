@@ -10,8 +10,8 @@ angular.module('MyApp')
     $scope.use_instant_values = false;
     $scope.use_uncompensated_values = false;
     $scope.showHelp = false;
-    $scope.emailorwebhook = "";  
- 
+    $scope.emailorwebhook = "";
+
     //$interval(function(){
     //  console.log($scope.start_date);
     //}, 1000);
@@ -130,8 +130,8 @@ angular.module('MyApp')
       // Case #2: end date and duration provided, but not start date
       else if(validDuration() && !validStartDate() && validEndDate()){
         var dur = moment.duration(duration);
-        postObj["start-date"] = endDate.subtract(dur).format();
         postObj["end-date"] = endDate.format();
+        postObj["start-date"] = endDate.subtract(dur).format();
         delete postObj.duration;
       }
       // Case #3: duration provided, with neither start date nor end date
