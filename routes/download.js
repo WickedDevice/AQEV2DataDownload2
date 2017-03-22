@@ -78,7 +78,7 @@ router.post('/', function(req, res) {
     m.utcOffset(utcOffset);
     zipFilename = params.zipfilename + "-" + m.format();
     zipFilename = zipFilename.replace(/[^\x20-\x7E]+/g, ''); // no non-printable characters allowed
-    ['\\\\','/',':','\\*','\\?','"','<','>','\\|',"-"," "].forEach(function(c){
+    ['\\\\','/',':','\\*','\\?','"','<','>','\\|',"-"," ", "'"].forEach(function(c){
       var regex = new RegExp(c, "g");
       zipFilename = zipFilename.replace(regex, "_"); // turn illegal characters into '_'
     });
