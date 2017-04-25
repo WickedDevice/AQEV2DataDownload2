@@ -117,7 +117,7 @@ router.post('/', function(req, res) {
   var serials = params["serial-numbers"].slice();
 
   var job = queue.create('download', {
-      title: 'downloading url ' + url.replace('${serial-number}', serials[0])
+      title: 'downloading url ' + decodeURI(url.replace('${serial-number}', serials[0]))
     , original_serials: serials.slice()
     , serials: serials.slice()
     , url: url
