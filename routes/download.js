@@ -59,7 +59,7 @@ router.post('/', function(req, res) {
   params["serial-numbers"].forEach((sn) => {
     // allow for commma separation on each row
     sn.split(",").filter(v => !!v).forEach((serial) => {
-      uniqueSerials[sn] = 1
+      uniqueSerials[serial] = 1
     });
   });
   params["serial-numbers"] = Object.keys(uniqueSerials);
