@@ -54,6 +54,11 @@ router.post('/', function(req, res) {
     return;
   }
 
+  // ensure that the list of serial numbers is unique
+  var uniqueSerials = {};
+  params["serial-numbers"].forEach(sn => uniqueSerials[sn] = 1);
+  params["serial-numbers"] = Object.keys(uniqueSerials);
+
   var utcOffset = 0;
   var startDate;
   var endDate;
@@ -61,8 +66,8 @@ router.post('/', function(req, res) {
     startDate = moment(params["start-date"]);
     utcOffset = moment.parseZone(startDate).utcOffset();
   }
-  
-  if(params["moment"] && (params["moment"] != "")){ 
+
+  if(params["moment"] && (params["moment"] != "")){
     utcOffset = moment.parseZone(params["moment"]).utcOffset();
   }
   else if(params["start-date"] && (params["start-date"] != "")){
@@ -70,8 +75,8 @@ router.post('/', function(req, res) {
   }
   else if(params["end-date"] && (params["end-date"] != "")){
     utcOffset = moment.parseZone(params["end-date"]).utcOffset();
-  } 
-  
+  }
+
   var zipFilename = "";
   if(params.zipfilename){
     var m = moment();
