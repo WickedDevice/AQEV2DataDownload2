@@ -56,8 +56,14 @@ router.post('/', function(req, res) {
 
   // ensure that the list of serial numbers is unique
   var uniqueSerials = {};
-  params["serial-numbers"].forEach(sn => uniqueSerials[sn] = 1);
+  params["serial-numbers"].forEach((sn) => {
+    // allow for commma separation on each row
+    sn.split(",").filter(v => !!v).forEach((serial) => {
+      uniqueSerials[sn] = 1
+    });
+  });
   params["serial-numbers"] = Object.keys(uniqueSerials);
+
 
   var utcOffset = 0;
   var startDate;
