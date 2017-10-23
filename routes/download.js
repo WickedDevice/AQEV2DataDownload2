@@ -127,7 +127,7 @@ router.post('/', function(req, res) {
   var save_location = dir;
   var serials = params["serial-numbers"].slice();
 
-  var job = queue.create('download', {
+  var job = queue.create('download-influx', {
       title: 'downloading url ' + decodeURIComponent(url.replace('${serial-number}', serials[0]))
     , original_serials: serials.slice()
     , serials: serials.slice()

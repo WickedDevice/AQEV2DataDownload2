@@ -44,20 +44,21 @@ block content
         div.col-md-6
           input#emailorwebhook.form-control(type="text", ng-model="emailorwebhook", placeholder="example@gmail.com")
         div.col-md-4(ng-show="showHelp") Enter an email address or a web URL, where we will send a link to the result zip when it's ready
-      div.form-group
-        div.col-md-offset-2.col-md-6
-          div.checkbox
-            label
-              input#use_instant_values(type="checkbox", ng-model="use_instant_values")
-              | Instantaneous Values
-        div.col-md-4(ng-show="showHelp") Checking the box gets instantaneous readings where possible (currently only for 'raw' values)
-      div.form-group
-        div.col-md-offset-2.col-md-6
-          div.checkbox
-            label
-              input#use_uncompensated_values(type="checkbox", ng-model="use_uncompensated_values")
-              | Uncompensated Values
-        div.col-md-4(ng-show="showHelp") Checking the box gets raw readings where possible (e.g. 'converted' rather than 'compensated' values). The Instantaneous checkbox takes precedence over the Uncompensated checkbox.
+      //-
+        div.form-group
+          div.col-md-offset-2.col-md-6
+            div.checkbox
+              label
+                input#use_instant_values(type="checkbox", ng-model="use_instant_values")
+                | Instantaneous Values
+          div.col-md-4(ng-show="showHelp") Checking the box gets instantaneous readings where possible (currently only for 'raw' values)
+        div.form-group
+          div.col-md-offset-2.col-md-6
+            div.checkbox
+              label
+                input#use_uncompensated_values(type="checkbox", ng-model="use_uncompensated_values")
+                | Uncompensated Values
+          div.col-md-4(ng-show="showHelp") Checking the box gets raw readings where possible (e.g. 'converted' rather than 'compensated' values). The Instantaneous checkbox takes precedence over the Uncompensated checkbox.
       div.row
         div.col-md-offset-2.col-md-6
           button#download_submit.btn.btn-primary.btn-space(type="button", ng-click="onDownloadClick()") Download Data
@@ -85,6 +86,6 @@ block content
                 li Hours are in 24-hour format, all fields are zero-padded
               li(ng-show="showHelp") Source code for this web application can be found&nbsp;
                 a(href="https://github.com/WickedDevice/AQEV2DataDownload") here
-              li Application last updated on Tuesday 11/15/2016
+              li Application last updated on Wednesday 10/11/2017
 
   div.modal

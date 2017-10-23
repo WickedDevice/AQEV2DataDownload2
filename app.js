@@ -6,7 +6,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var cors = require('cors');
 
-var routes = require('./routes/index');
+//var routes = require('./routes/index');
 var download = require('./routes/download');
 
 var app = express();
@@ -38,8 +38,8 @@ app.use(express.static(path.join(__dirname, 'node_modules/angular-material-datet
 app.use(express.static(path.join(__dirname, 'node_modules/angular-material-datetimepicker/font')));
 app.use(express.static(path.join(__dirname, 'node_modules/moment')));
 
-app.use('/', routes);
-app.use('/download', download);
+//app.use('/', routes);
+app.use('/', download);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
