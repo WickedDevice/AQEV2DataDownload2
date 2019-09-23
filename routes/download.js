@@ -145,6 +145,7 @@ router.post('/', function(req, res) {
   .priority('high')
   .attempts(10)
   .backoff({delay: 60*1000, type:'exponential'})
+  .removeOnComplete(true)
   .save();
 
   res.json({status: "OK", filename: zipFilename});
