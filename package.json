@@ -28,7 +28,7 @@
     "jsonfile": "~2.2.3",
     "kue": "^0.11.5",
     "moment": "^2.13.0",
-    "morgan": "~1.6.1",
+    "morgan": "~1.9.1",
     "node-uuid": "^1.4.7",
     "node-zip": "~1.1.1",
     "promise-do-whilst": "^1.0.1",
